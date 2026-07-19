@@ -164,7 +164,7 @@ function closeToc() {
 }
 
 async function jumpToChapter(chapterId: string) {
-  if (isJumping.value) return
+  if (isJumping.value || engine.isFlipping.value) return
 
   isJumping.value = true
   tocOpen.value = false
@@ -308,10 +308,13 @@ function isFirstInSection(index: number): boolean {
       <div
         v-if="tocOpen"
         class="toc-overlay"
+        role="dialog"
+        aria-modal="true"
         @click.self="closeToc"
       >
         <div class="toc-card">
           <button
+            type="button"
             class="toc-close-btn"
             @click="closeToc"
           >
