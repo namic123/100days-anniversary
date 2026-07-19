@@ -7,3 +7,4 @@ test-results/
 src/**/*.js
 tests/**/*.js
 *.log
+.superpowers/

@@ -16,7 +16,7 @@ function openBook() {
 </script>
 
 <template>
-  <div class="book-container">
+  <div class="book-container visible">
     <div
       class="book-cover"
       role="button"
