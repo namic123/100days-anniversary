@@ -85,7 +85,7 @@ Follow existing project patterns once the app is initialized. Avoid premature ab
 
 ## Design & Interaction Rules
 
-Follow `DESIGN.md`. The approved direction is **Warm Interactive Polaroid Scrapbook**.
+Follow `DESIGN.md`. The approved direction is **Gift Box Diary**. See DESIGN.md for details.
 
 Use semantic HTML first. Prefer CSS transitions for envelope opening, card reveals, flower interactions, and paper motion. Do not use Three.js in the first production pass unless explicitly approved. If Three.js is later added, isolate it from regular content components and keep one animation loop.
 
