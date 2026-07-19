@@ -47,6 +47,8 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          GITHUB_PAGES_BASE: /100days-anniversary/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
