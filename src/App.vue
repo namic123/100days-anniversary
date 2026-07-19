@@ -19,6 +19,21 @@ const languageOptions: Array<{ value: Locale; label: string }> = [
   { value: 'en', label: 'EN' },
 ]
 
+// Locale menu state
+const localeMenuOpen = ref(false)
+const currentLocaleLabel = computed(() => {
+  return languageOptions.find(o => o.value === locale.value)?.label ?? 'EN'
+})
+
+function toggleLocaleMenu() {
+  localeMenuOpen.value = !localeMenuOpen.value
+}
+
+function selectLocale(value: Locale) {
+  locale.value = value
+  localeMenuOpen.value = false
+}
+
 // TOC state
 const tocOpen = ref(false)
 const isJumping = ref(false)
@@ -216,22 +231,36 @@ function isFirstInSection(index: number): boolean {
     class="app-shell"
     tabindex="0"
     @keydown="onKeydown"
+    @click="localeMenuOpen = false"
   >
-    <!-- Language Switcher (always visible) -->
+    <!-- Locale FAB (bottom-right) -->
     <div
-      class="language-switcher"
-      aria-label="Language"
+      class="locale-fab-container"
       @click.stop
     >
       <button
-        v-for="option in languageOptions"
-        :key="option.value"
         type="button"
-        :aria-pressed="locale === option.value"
-        @click.stop="locale = option.value"
+        class="locale-fab"
+        aria-label="Language"
+        @click="toggleLocaleMenu"
       >
-        {{ option.label }}
+        {{ currentLocaleLabel }}
       </button>
+      <div
+        v-if="localeMenuOpen"
+        class="locale-menu"
+      >
+        <button
+          v-for="option in languageOptions"
+          :key="option.value"
+          type="button"
+          class="locale-menu-item"
+          :aria-pressed="locale === option.value"
+          @click="selectLocale(option.value)"
+        >
+          {{ option.label }}
+        </button>
+      </div>
     </div>
 
     <!-- Phase 1: Gift Box -->

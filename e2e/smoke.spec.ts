@@ -84,7 +84,8 @@ test('full flow: gift box → book → reading → language switch', async ({ pa
   // Phase 3: Reading mode — first page visible
   await expect(page.locator('.reading-container')).toBeVisible({ timeout: 3000 })
 
-  // Switch language to Korean
+  // Switch language to Korean via locale FAB
+  await page.getByRole('button', { name: 'Language' }).click()
   await page.getByRole('button', { name: '한국어' }).click()
 
   // Verify Korean content appears (name tag would be in Korean if visible)
