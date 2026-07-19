@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Design Mockup 05 — Book Page Flip Interaction</title>
+<style>
+:root {
+  --paper: #f7eedc;
+  --ivory: #fff9ed;
+  --ink: #3d2b1f;
+  --muted: #7c6652;
+  --rose: #c9827f;
+  --sunflower: #f4be3a;
+  --leaf: #7e8a56;
+  --spine: #5c3d2e;
+  --page-shadow: rgba(61, 43, 31, 0.15);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #2a1f17;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  overflow: hidden;
+  color: var(--ink);
+}
+
+.book-container {
+  position: relative;
+  width: 350px;
+  height: 560px;
+  perspective: 1800px;
+  margin: 20px auto;
+}
+
+.book {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+/* Book cover/back */
+.book-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #4a3228 0%, #3d2518 100%);
+  border-radius: 4px 12px 12px 4px;
+  box-shadow:
+    inset -3px 0 8px rgba(0,0,0,0.3),
+    4px 4px 20px rgba(0,0,0,0.5);
+}
+
+/* Spine */
+.book-spine {
+  position: absolute;
+  left: -8px;
+  top: 0;
+  width: 16px;
+  height: 100%;
+  background: linear-gradient(90deg, #3d2518, var(--spine), #4a3228);
+  border-radius: 4px 0 0 4px;
+  box-shadow: inset 0 0 4px rgba(0,0,0,0.5);
+  z-index: 100;
+}
+
+.book-spine::before,
+.book-spine::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+}
+
+.book-spine::before { top: 30px; }
+.book-spine::after { bottom: 30px; }
+
+/* Pages */
+.page {
+  position: absolute;
+  width: calc(100% - 8px);
+  height: calc(100% - 16px);
+  top: 8px;
+  left: 8px;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+  cursor: pointer;
+  z-index: 1;
+}
+
+.page.flipped {
+  transform: rotateY(-180deg);
+}
+
+.page-front,
+.page-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 2px 8px 8px 2px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 28px;
+}
+
+.page-front {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 27px,
+      rgba(124, 102, 82, 0.03) 27px,
+      rgba(124, 102, 82, 0.03) 28px
+    ),
+    linear-gradient(135deg, var(--ivory) 0%, var(--paper) 50%, #f0e6d0 100%);
+  box-shadow:
+    inset -2px 0 4px var(--page-shadow),
+    2px 0 8px rgba(0,0,0,0.1);
+}
+
+.page-back {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 27px,
+      rgba(124, 102, 82, 0.03) 27px,
+      rgba(124, 102, 82, 0.03) 28px
+    ),
+    linear-gradient(225deg, var(--ivory) 0%, var(--paper) 50%, #f0e6d0 100%);
+  transform: rotateY(180deg);
+  box-shadow:
+    inset 2px 0 4px var(--page-shadow),
+    -2px 0 8px rgba(0,0,0,0.1);
+}
+
+/* Page number */
+.page-number {
+  position: absolute;
+  bottom: 16px;
+  font-size: 11px;
+  color: var(--muted);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+}
+
+.page-front .page-number {
+  right: 24px;
+}
+
+.page-back .page-number {
+  left: 24px;
+}
+
+/* Flip shadow effect */
+.page.flipping {
+  z-index: 50 !important;
+}
+
+.page.flipping .page-front {
+  box-shadow:
+    inset -2px 0 4px var(--page-shadow),
+    -8px 4px 20px rgba(0,0,0,0.25);
+}
+
+/* ===== PAGE CONTENT STYLES ===== */
+
+/* Title Page (Page 1) */
+.title-page {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.title-page .ornament-top {
+  font-size: 24px;
+  color: var(--sunflower);
+  margin-bottom: 24px;
+  letter-spacing: 8px;
+}
+
+.title-page h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 26px;
+  color: var(--ink);
+  margin-bottom: 12px;
+  font-weight: normal;
+  line-height: 1.4;
+}
+
+.title-page .date-range {
+  font-family: Georgia, serif;
+  font-size: 14px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  margin-bottom: 32px;
+}
+
+.title-page .subtitle {
+  font-size: 13px;
+  color: var(--rose);
+  font-style: italic;
+  font-family: Georgia, serif;
+}
+
+.title-page .ornament-bottom {
+  margin-top: 40px;
+  color: var(--leaf);
+  font-size: 20px;
+  letter-spacing: 4px;
+}
+
+/* Page 2 - Title back (dedication) */
+.dedication-page {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.dedication-page p {
+  font-family: Georgia, serif;
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 2;
+  font-style: italic;
+}
+
+.dedication-page .heart {
+  color: var(--rose);
+  font-size: 20px;
+  margin-top: 20px;
+}
+
+/* Timeline Page (Page 3) */
+.timeline-page {
+  padding-top: 24px;
+}
+
+.timeline-page .section-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.timeline-page h2 {
+  font-family: Georgia, serif;
+  font-size: 20px;
+  color: var(--ink);
+  font-weight: normal;
+  margin-bottom: 28px;
+}
+
+.timeline-entry {
+  position: relative;
+  padding-left: 20px;
+  margin-bottom: 24px;
+  border-left: 2px solid var(--sunflower);
+}
+
+.timeline-entry .date {
+  font-size: 11px;
+  color: var(--sunflower);
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.timeline-entry .event {
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+.timeline-entry::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sunflower);
+}
+
+/* Page 4 - Timeline continued */
+.timeline-page-cont {
+  padding-top: 24px;
+}
+
+.timeline-page-cont .moment-card {
+  background: rgba(244, 190, 58, 0.08);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(244, 190, 58, 0.2);
+}
+
+.timeline-page-cont .moment-card .day-label {
+  font-size: 11px;
+  color: var(--sunflower);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.timeline-page-cont .moment-card p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+/* Memory Page (Page 5) */
+.memory-page {
+  align-items: center;
+  padding-top: 24px;
+}
+
+.memory-page .section-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--muted);
+  margin-bottom: 16px;
+  align-self: flex-start;
+}
+
+.polaroid {
+  background: #fff;
+  padding: 12px 12px 40px 12px;
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.1),
+    0 1px 3px rgba(0,0,0,0.08);
+  transform: rotate(-1.5deg);
+  margin-bottom: 20px;
+  width: 220px;
+}
+
+.polaroid .photo-placeholder {
+  width: 100%;
+  height: 180px;
+  background: linear-gradient(135deg, #e8dcc8 0%, #d4c4a8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.polaroid .caption {
+  text-align: center;
+  margin-top: 12px;
+  font-family: Georgia, serif;
+  font-size: 13px;
+  color: var(--ink);
+  font-style: italic;
+}
+
+.memory-page .memory-text {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.8;
+  text-align: center;
+  font-style: italic;
+  font-family: Georgia, serif;
+}
+
+/* Page 6 - Memory back */
+.memory-page-2 {
+  align-items: center;
+  padding-top: 28px;
+}
+
+.memory-page-2 .section-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--muted);
+  margin-bottom: 20px;
+  align-self: flex-start;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.photo-grid .grid-item {
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, #e8dcc8 0%, #d4c4a8 100%);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.memory-page-2 .note {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.7;
+  font-family: Georgia, serif;
+}
+
+/* Reasons Page (Page 7) */
+.reasons-page {
+  padding-top: 24px;
+}
+
+.reasons-page .section-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.reasons-page h2 {
+  font-family: Georgia, serif;
+  font-size: 19px;
+  color: var(--ink);
+  font-weight: normal;
+  margin-bottom: 24px;
+}
+
+.reason-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 18px;
+  gap: 12px;
+}
+
+.reason-item .num {
+  font-family: Georgia, serif;
+  font-size: 22px;
+  color: var(--rose);
+  line-height: 1;
+  min-width: 28px;
+}
+
+.reason-item .text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+  padding-top: 4px;
+}
+
+.reasons-page .leaf-accent {
+  text-align: right;
+  color: var(--leaf);
+  font-size: 16px;
+  margin-top: 16px;
+  letter-spacing: 4px;
+}
+
+/* Page 8 - Reasons continued */
+.reasons-page-2 {
+  padding-top: 24px;
+}
+
+.reasons-page-2 .reason-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 18px;
+  gap: 12px;
+}
+
+.reasons-page-2 .reason-item .num {
+  font-family: Georgia, serif;
+  font-size: 22px;
+  color: var(--rose);
+  line-height: 1;
+  min-width: 28px;
+}
+
+.reasons-page-2 .reason-item .text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+  padding-top: 4px;
+}
+
+.reasons-page-2 .flower-accent {
+  text-align: center;
+  margin-top: 28px;
+  color: var(--rose);
+  font-size: 14px;
+  letter-spacing: 6px;
+}
+
+.reasons-page-2 .closing {
+  text-align: center;
+  margin-top: 16px;
+  font-family: Georgia, serif;
+  font-size: 14px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Letter Page (Page 9) */
+.letter-page {
+  padding-top: 28px;
+}
+
+.letter-page .section-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+.letter-page .greeting {
+  font-family: Georgia, serif;
+  font-size: 17px;
+  color: var(--ink);
+  margin-bottom: 24px;
+}
+
+.letter-page .letter-body {
+  font-family: Georgia, serif;
+  font-size: 15px;
+  line-height: 2;
+  color: var(--ink);
+}
+
+.letter-page .letter-body p {
+  margin-bottom: 20px;
+  text-indent: 1em;
+}
+
+/* Page 10 - Letter end */
+.letter-page-2 {
+  padding-top: 28px;
+  justify-content: space-between;
+}
+
+.letter-page-2 .letter-body {
+  font-family: Georgia, serif;
+  font-size: 15px;
+  line-height: 2;
+  color: var(--ink);
+}
+
+.letter-page-2 .letter-body p {
+  margin-bottom: 20px;
+  text-indent: 1em;
+}
+
+.letter-page-2 .signature {
+  text-align: right;
+  font-family: Georgia, serif;
+  padding-top: 20px;
+  border-top: 1px solid rgba(124, 102, 82, 0.2);
+}
+
+.letter-page-2 .signature .date {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.letter-page-2 .signature .name {
+  font-size: 16px;
+  color: var(--ink);
+  font-style: italic;
+}
+
+.letter-page-2 .signature .endmark {
+  color: var(--rose);
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+/* ===== NAVIGATION ===== */
+
+.nav-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.nav-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.nav-dot.active {
+  background: var(--sunflower);
+  width: 18px;
+  border-radius: 3px;
+}
+
+.page-indicator {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  margin-top: 8px;
+  font-family: Georgia, serif;
+  font-style: italic;
+}
+
+/* Tap zones */
+.tap-zone {
+  position: absolute;
+  top: 0;
+  width: 35%;
+  height: 100%;
+  z-index: 200;
+  cursor: pointer;
+}
+
+.tap-zone-left {
+  left: 0;
+}
+
+.tap-zone-right {
+  right: 0;
+}
+
+/* Swipe hint */
+.swipe-hint {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,0.4);
+  font-size: 11px;
+  animation: fadeHint 3s ease-in-out forwards;
+}
+
+@keyframes fadeHint {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Mockup label */
+.mockup-label {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,0.3);
+  font-size: 10px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+/* Page stack effect */
+.page-stack-line {
+  position: absolute;
+  right: 0;
+  width: calc(100% - 10px);
+  height: calc(100% - 20px);
+  top: 10px;
+  left: 10px;
+  border-radius: 2px 8px 8px 2px;
+  background: var(--paper);
+  opacity: 0.6;
+}
+
+.page-stack-line:nth-child(1) {
+  transform: translateX(2px);
+  opacity: 0.3;
+}
+.page-stack-line:nth-child(2) {
+  transform: translateX(4px);
+  opacity: 0.2;
+}
+
+/* Turning animation shadow */
+@keyframes pageShadow {
+  0% { box-shadow: inset -2px 0 4px var(--page-shadow), 2px 0 8px rgba(0,0,0,0.1); }
+  50% { box-shadow: inset -2px 0 4px var(--page-shadow), -12px 6px 25px rgba(0,0,0,0.3); }
+  100% { box-shadow: inset -2px 0 4px var(--page-shadow), 2px 0 8px rgba(0,0,0,0.1); }
+}
+</style>
+</head>
+<body>
+
+<div class="book-container" id="bookContainer">
+  <div class="book" id="book">
+    <!-- Book back cover -->
+    <div class="book-back"></div>
+
+    <!-- Page stack visual -->
+    <div class="page-stack-line"></div>
+    <div class="page-stack-line"></div>
+
+    <!-- Page 5 (bottommost): Pages 9-10 Letter -->
+    <div class="page" data-page="5">
+      <div class="page-front letter-page">
+        <div class="section-label">For You</div>
+        <div class="greeting">To. 나의 사람에게</div>
+        <div class="letter-body">
+          <p>100일이라는 시간이 이렇게 빠르게 지나갈 줄은 몰랐어. 매일이 새롭고, 매 순간이 소중했어.</p>
+          <p>네가 옆에 있다는 것만으로도 하루가 완전해지는 기분이야. 아침에 눈 뜨면 제일 먼저 네 생각이 나고...</p>
+        </div>
+        <span class="page-number">9</span>
+      </div>
+      <div class="page-back letter-page-2">
+        <div class="letter-body">
+          <p>앞으로도 이렇게 함께 웃고, 함께 걸어가자. 200일, 300일, 그리고 1000일 후에도 지금처럼.</p>
+          <p>항상 고마워, 그리고 사랑해.</p>
+        </div>
+        <div class="signature">
+          <div class="date">2026년 8월 5일</div>
+          <div class="name">너의 사람이</div>
+          <div class="endmark">with love</div>
+        </div>
+        <span class="page-number">10</span>
+      </div>
+    </div>
+
+    <!-- Page 4: Pages 7-8 Reasons -->
+    <div class="page" data-page="4">
+      <div class="page-front reasons-page">
+        <div class="section-label">Chapter 04</div>
+        <h2>내가 너를 좋아하는 이유</h2>
+        <div class="reason-item">
+          <span class="num">1.</span>
+          <span class="text">웃을 때 눈이 반달처럼 되는 거</span>
+        </div>
+        <div class="reason-item">
+          <span class="num">2.</span>
+          <span class="text">내 얘기를 끝까지 들어주는 거</span>
+        </div>
+        <div class="reason-item">
+          <span class="num">3.</span>
+          <span class="text">맛있는 거 먹을 때 행복해하는 표정</span>
+        </div>
+        <div class="reason-item">
+          <span class="num">4.</span>
+          <span class="text">힘들 때 아무 말 없이 안아주는 거</span>
+        </div>
+        <div class="reason-item">
+          <span class="num">5.</span>
+          <span class="text">나만 보고 웃어주는 그 미소</span>
+        </div>
+        <div class="leaf-accent">&#127807; &#127807; &#127807;</div>
+        <span class="page-number">7</span>
+      </div>
+      <div class="page-back reasons-page-2">
+        <div class="reason-item">
+          <span class="num">6.</span>
+          <span class="text">작은 것에도 고마워하는 마음</span>
+        </div>
+        <div class="reason-item">
+          <span class="num">7.</span>
+          <span class="text">같이 있으면 시간이 빨리 가는 거</span>
+        </div>
+        <div class="reason-item">
+          <span class="num">8.</span>
+          <span class="text">나를 더 좋은 사람이 되게 만드는 거</span>
+        </div>
+        <div class="reason-item">
+          <span class="num">9.</span>
+          <span class="text">세상에서 제일 따뜻한 손</span>
+        </div>
+        <div class="reason-item">
+          <span class="num">10.</span>
+          <span class="text">그냥... 네가 너라서</span>
+        </div>
+        <div class="flower-accent">&#10045; &#10045; &#10045;</div>
+        <div class="closing">...그리고 100가지 더</div>
+        <span class="page-number">8</span>
+      </div>
+    </div>
+
+    <!-- Page 3: Pages 5-6 Memory -->
+    <div class="page" data-page="3">
+      <div class="page-front memory-page">
+        <div class="section-label">Chapter 03 &mdash; Memories</div>
+        <div class="polaroid">
+          <div class="photo-placeholder">[ our first photo ]</div>
+          <div class="caption">첫 번째 데이트</div>
+        </div>
+        <p class="memory-text">이 날의 공기, 이 날의 온도,<br>모든 게 기억나</p>
+        <span class="page-number">5</span>
+      </div>
+      <div class="page-back memory-page-2">
+        <div class="section-label">More Moments</div>
+        <div class="photo-grid">
+          <div class="grid-item">photo 1</div>
+          <div class="grid-item">photo 2</div>
+          <div class="grid-item">photo 3</div>
+          <div class="grid-item">photo 4</div>
+        </div>
+        <p class="note">작은 순간들이 모여<br>우리의 이야기가 되었어</p>
+        <span class="page-number">6</span>
+      </div>
+    </div>
+
+    <!-- Page 2: Pages 3-4 Timeline -->
+    <div class="page" data-page="2">
+      <div class="page-front timeline-page">
+        <div class="section-label">Chapter 02</div>
+        <h2>우리의 이야기가<br>시작된 날</h2>
+        <div class="timeline-entry">
+          <div class="date">2026. 04. 28</div>
+          <div class="event">처음 만난 날. 어색한 인사와 함께 시작된 우리의 이야기.</div>
+        </div>
+        <div class="timeline-entry">
+          <div class="date">2026. 05. 10</div>
+          <div class="event">첫 데이트. 카페에서 세 시간이 순식간에 지나갔어.</div>
+        </div>
+        <div class="timeline-entry">
+          <div class="date">2026. 05. 24</div>
+          <div class="event">"우리 사귈까?" 떨리는 마음으로 건넨 그 한마디.</div>
+        </div>
+        <span class="page-number">3</span>
+      </div>
+      <div class="page-back timeline-page-cont">
+        <div class="moment-card">
+          <div class="day-label">Day 30</div>
+          <p>한 달이라는 시간 동안 너와 함께한 매일이 선물 같았어.</p>
+        </div>
+        <div class="moment-card">
+          <div class="day-label">Day 50</div>
+          <p>반쯤 왔다. 하지만 이건 시작일 뿐이라는 걸 알아.</p>
+        </div>
+        <div class="moment-card">
+          <div class="day-label">Day 100</div>
+          <p>드디어 100일. 매일매일이 감사한 우리의 기록. &#127804;</p>
+        </div>
+        <span class="page-number">4</span>
+      </div>
+    </div>
+
+    <!-- Page 1 (topmost): Pages 1-2 Title -->
+    <div class="page" data-page="1">
+      <div class="page-front title-page">
+        <div class="ornament-top">&#10022; &#10022; &#10022;</div>
+        <h1>우리의<br>100일 일기</h1>
+        <div class="date-range">2026.04.28 &mdash; 2026.08.05</div>
+        <div class="subtitle">A hundred days of us</div>
+        <div class="ornament-bottom">&#127811; &#10084; &#127811;</div>
+        <span class="page-number">1</span>
+      </div>
+      <div class="page-back dedication-page">
+        <p>이 작은 일기장은<br><br>우리의 100일을 기억하기 위해<br><br>한 장 한 장 채워갑니다</p>
+        <div class="heart">&#10084;</div>
+        <span class="page-number">2</span>
+      </div>
+    </div>
+
+    <!-- Spine overlay -->
+    <div class="book-spine"></div>
+  </div>
+
+  <!-- Tap zones -->
+  <div class="tap-zone tap-zone-left" id="tapLeft"></div>
+  <div class="tap-zone tap-zone-right" id="tapRight"></div>
+
+  <!-- Swipe hint -->
+  <div class="swipe-hint">swipe or tap to turn pages</div>
+</div>
+
+<!-- Navigation -->
+<div class="nav-controls" id="navDots">
+  <div class="nav-dot active" data-target="0"></div>
+  <div class="nav-dot" data-target="1"></div>
+  <div class="nav-dot" data-target="2"></div>
+  <div class="nav-dot" data-target="3"></div>
+  <div class="nav-dot" data-target="4"></div>
+  <div class="nav-dot" data-target="5"></div>
+  <div class="nav-dot" data-target="6"></div>
+  <div class="nav-dot" data-target="7"></div>
+  <div class="nav-dot" data-target="8"></div>
+  <div class="nav-dot" data-target="9"></div>
+</div>
+<div class="page-indicator" id="pageIndicator">page 1 of 10</div>
+
+<div class="mockup-label">design mockup 05 &mdash; book page flip interaction</div>
+
+<script>
+(function() {
+  const pages = document.querySelectorAll('.page');
+  const navDots = document.querySelectorAll('.nav-dot');
+  const pageIndicator = document.getElementById('pageIndicator');
+  const bookContainer = document.getElementById('bookContainer');
+
+  // Total visible pages (front + back for each physical page)
+  // We have 5 physical pages, each with front (odd) and back (even)
+  // Current view: which page number (1-10) the user is looking at
+  let currentPage = 1; // 1-indexed page number currently visible
+  const totalPages = 10;
+  const physicalPages = 5;
+
+  // Physical pages are ordered in DOM from bottom (page 5) to top (page 1)
+  // page[0] = physical page 5 (pages 9-10)
+  // page[1] = physical page 4 (pages 7-8)
+  // page[2] = physical page 3 (pages 5-6)
+  // page[3] = physical page 2 (pages 3-4)
+  // page[4] = physical page 1 (pages 1-2)
+
+  function getPhysicalPageIndex(pageNum) {
+    // pageNum 1-2 -> physical page 1 -> DOM index 4
+    // pageNum 3-4 -> physical page 2 -> DOM index 3
+    // pageNum 5-6 -> physical page 3 -> DOM index 2
+    // pageNum 7-8 -> physical page 4 -> DOM index 1
+    // pageNum 9-10 -> physical page 5 -> DOM index 0
+    const physicalNum = Math.ceil(pageNum / 2); // 1-5
+    return physicalPages - physicalNum; // 4,3,2,1,0
+  }
+
+  function updateZIndices() {
+    pages.forEach((page, domIdx) => {
+      const physNum = physicalPages - domIdx; // 5,4,3,2,1
+      if (page.classList.contains('flipped')) {
+        // Flipped pages stack on left, higher physical = higher z
+        page.style.zIndex = physNum;
+      } else {
+        // Unflipped pages stack on right, lower physical number = higher z (on top)
+        page.style.zIndex = physicalPages - physNum + 1;
+      }
+    });
+  }
+
+  function flipForward() {
+    if (currentPage >= totalPages) return;
+
+    // Determine which physical page to flip
+    // If on odd page (front), flip that physical page
+    // If on even page (back), flip the next physical page
+    let physToFlip;
+    if (currentPage % 2 === 1) {
+      // On front side, flip this physical page to show back
+      physToFlip = Math.ceil(currentPage / 2);
+      currentPage++;
+    } else {
+      // On back side, flip the next physical page... actually advance to next front
+      physToFlip = Math.ceil(currentPage / 2);
+      // This physical page is already showing its back, we need to advance
+      // Actually, let's simplify: each flip shows next page
+      currentPage++;
+      physToFlip = Math.ceil((currentPage - 1) / 2);
+    }
+
+    // Simplified approach: track which physical pages are flipped
+    // Page visible: if physical page N is not flipped, we see its front (page 2N-1)
+    // If physical page N is flipped, we see its back (page 2N)
+    // The TOPMOST unflipped page determines what front we see
+    // The TOPMOST flipped page determines what back we see
+    applyFlipState();
+  }
+
+  function flipBackward() {
+    if (currentPage <= 1) return;
+    currentPage--;
+    applyFlipState();
+  }
+
+  function goToPage(targetPage) {
+    currentPage = Math.max(1, Math.min(totalPages, targetPage));
+    applyFlipState();
+  }
+
+  function applyFlipState() {
+    // Determine which physical pages should be flipped
+    // Pages 1-2 on physical page 1: if currentPage > 2, physical 1 is flipped
+    // Pages 3-4 on physical page 2: if currentPage > 4, physical 2 is flipped
+    // General: physical page P is flipped if currentPage > 2P
+    // What page are we seeing?
+    // If currentPage is odd (e.g., 3): we see the front of physical ceil(3/2)=2
+    //   Physical pages 1 should be flipped (currentPage > 2: yes, 3>2)
+    //   Physical page 2 should NOT be flipped
+    // If currentPage is even (e.g., 4): we see the back of physical ceil(4/2)=2
+    //   Physical page 1 is flipped (4 > 2: yes)
+    //   Physical page 2 IS flipped (we're seeing its back)
+
+    // Physical page P is flipped if:
+    //   - currentPage > 2P (we've moved past both its sides)
+    //   - OR currentPage == 2P (we're on its back side, so it's flipped)
+    // i.e., physical page P is flipped if currentPage >= 2P
+
+    // Wait, let me reconsider. If currentPage = 2 (back of page 1):
+    //   Physical page 1 should be flipped to show its back. Yes, 2 >= 2*1 = 2. Correct.
+    // If currentPage = 3 (front of page 2):
+    //   Physical page 1 is flipped (3 >= 2). Physical page 2 is not (3 >= 4? No).
+    //   We see the front of physical page 2. Correct.
+
+    pages.forEach((page, domIdx) => {
+      const physNum = physicalPages - domIdx; // maps DOM index to physical page number
+      const shouldFlip = currentPage >= 2 * physNum;
+
+      if (shouldFlip && !page.classList.contains('flipped')) {
+        page.classList.add('flipping');
+        page.classList.add('flipped');
+        setTimeout(() => page.classList.remove('flipping'), 800);
+      } else if (!shouldFlip && page.classList.contains('flipped')) {
+        page.classList.add('flipping');
+        page.classList.remove('flipped');
+        setTimeout(() => page.classList.remove('flipping'), 800);
+      }
+    });
+
+    updateZIndices();
+    updateNav();
+  }
+
+  function updateNav() {
+    navDots.forEach((dot, idx) => {
+      dot.classList.toggle('active', idx === currentPage - 1);
+    });
+    pageIndicator.textContent = `page ${currentPage} of ${totalPages}`;
+  }
+
+  // Tap navigation
+  document.getElementById('tapRight').addEventListener('click', function(e) {
+    e.preventDefault();
+    flipForward();
+  });
+
+  document.getElementById('tapLeft').addEventListener('click', function(e) {
+    e.preventDefault();
+    flipBackward();
+  });
+
+  // Nav dot clicks
+  navDots.forEach(dot => {
+    dot.addEventListener('click', function() {
+      const target = parseInt(this.dataset.target);
+      goToPage(target + 1);
+    });
+  });
+
+  // Swipe support
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let isSwiping = false;
+
+  bookContainer.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    isSwiping = true;
+  }, { passive: true });
+
+  bookContainer.addEventListener('touchend', function(e) {
+    if (!isSwiping) return;
+    isSwiping = false;
+
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+
+    // Only trigger if horizontal swipe is dominant
+    if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      if (deltaX < 0) {
+        // Swipe left = next page
+        flipForward();
+      } else {
+        // Swipe right = previous page
+        flipBackward();
+      }
+    }
+  }, { passive: true });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      flipForward();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      flipBackward();
+    }
+  });
+
+  // Initialize z-indices
+  updateZIndices();
+  updateNav();
+})();
+</script>
+</body>
+</html>

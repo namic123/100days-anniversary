@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Mockup 01 — Craft Paper Box</title>
+<style>
+:root {
+  --paper: #f7eedc;
+  --ink: #3d2b1f;
+  --muted: #7c6652;
+  --film: #d8be91;
+  --rose: #c9827f;
+  --sunflower: #f4be3a;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--paper);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink);
+  overflow: hidden;
+  perspective: 1200px;
+}
+
+.scene {
+  width: 390px;
+  max-width: 100vw;
+  height: 844px;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Hint text */
+.hint {
+  position: absolute;
+  top: 15%;
+  font-size: 14px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+
+.hint.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Box container */
+.box-wrapper {
+  position: relative;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+}
+
+.box-wrapper:hover {
+  transform: translateY(-4px);
+}
+
+.box-wrapper.opened:hover {
+  transform: none;
+}
+
+/* Box shadow */
+.box-shadow {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 20px;
+  background: radial-gradient(ellipse, rgba(61, 43, 31, 0.2) 0%, transparent 70%);
+  transition: all 0.8s ease;
+}
+
+.box-wrapper.opened .box-shadow {
+  width: 240px;
+  opacity: 0.6;
+}
+
+/* Box body */
+.box {
+  width: 220px;
+  height: 180px;
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.box-face {
+  position: absolute;
+  background: linear-gradient(135deg, #c4956a 0%, #b8845c 30%, #a87648 60%, #c4956a 100%);
+  border: 1px solid rgba(61, 43, 31, 0.15);
+}
+
+/* Paper texture overlay */
+.box-face::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.03) 2px,
+      rgba(255, 255, 255, 0.03) 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 3px,
+      rgba(0, 0, 0, 0.02) 3px,
+      rgba(0, 0, 0, 0.02) 6px
+    );
+  pointer-events: none;
+}
+
+/* Speckle texture */
+.box-face::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(61, 43, 31, 0.08) 1px, transparent 1px),
+    radial-gradient(circle, rgba(61, 43, 31, 0.05) 1px, transparent 1px);
+  background-size: 13px 13px, 7px 7px;
+  background-position: 0 0, 4px 4px;
+  pointer-events: none;
+}
+
+.box-front {
+  width: 220px;
+  height: 180px;
+  transform: translateZ(70px);
+}
+
+.box-back {
+  width: 220px;
+  height: 180px;
+  transform: translateZ(-70px) rotateY(180deg);
+}
+
+.box-left {
+  width: 140px;
+  height: 180px;
+  left: -70px;
+  transform: translateX(70px) rotateY(-90deg);
+}
+
+.box-right {
+  width: 140px;
+  height: 180px;
+  right: -70px;
+  transform: translateX(-70px) rotateY(90deg);
+}
+
+.box-bottom {
+  width: 220px;
+  height: 140px;
+  bottom: 0;
+  transform: translateY(20px) rotateX(-90deg);
+  background: linear-gradient(135deg, #a07040 0%, #96643a 100%);
+}
+
+/* Box lid */
+.box-lid {
+  position: absolute;
+  top: -12px;
+  left: -8px;
+  width: 236px;
+  height: 156px;
+  transform-style: preserve-3d;
+  transform-origin: top center;
+  transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 10;
+}
+
+.box-wrapper.opened .box-lid {
+  transform: rotateX(-130deg);
+}
+
+.lid-top {
+  position: absolute;
+  width: 236px;
+  height: 156px;
+  background: linear-gradient(135deg, #d4a574 0%, #c49464 30%, #b88454 60%, #c49464 100%);
+  border: 1px solid rgba(61, 43, 31, 0.15);
+  border-radius: 2px;
+  transform: rotateX(90deg) translateZ(-6px);
+  transform-origin: top;
+}
+
+.lid-top::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.04) 2px,
+      rgba(255, 255, 255, 0.04) 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 3px,
+      rgba(0, 0, 0, 0.02) 3px,
+      rgba(0, 0, 0, 0.02) 6px
+    );
+}
+
+.lid-top::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(61, 43, 31, 0.06) 1px, transparent 1px),
+    radial-gradient(circle, rgba(61, 43, 31, 0.04) 1px, transparent 1px);
+  background-size: 11px 11px, 7px 7px;
+  background-position: 0 0, 3px 3px;
+}
+
+.lid-front {
+  position: absolute;
+  width: 236px;
+  height: 24px;
+  bottom: 0;
+  background: linear-gradient(180deg, #c49464, #b08050);
+  border: 1px solid rgba(61, 43, 31, 0.15);
+  border-top: none;
+  border-radius: 0 0 2px 2px;
+}
+
+/* Twine ribbon */
+.ribbon-h {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(180deg, #8b6914, #6b4f0e, #8b6914);
+  transform: translateY(-50%) translateZ(1px);
+  z-index: 2;
+  border-radius: 1px;
+}
+
+.ribbon-v {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 4px;
+  background: linear-gradient(90deg, #8b6914, #6b4f0e, #8b6914);
+  transform: translateX(-50%) translateZ(1px);
+  z-index: 2;
+  border-radius: 1px;
+}
+
+/* Bow on top of lid */
+.bow {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%) translateZ(2px);
+  z-index: 3;
+  width: 50px;
+  height: 30px;
+}
+
+.bow-loop {
+  position: absolute;
+  width: 22px;
+  height: 16px;
+  border: 3px solid #8b6914;
+  border-radius: 50%;
+  top: 2px;
+  background: rgba(139, 105, 20, 0.1);
+}
+
+.bow-loop.left {
+  left: 2px;
+  transform: rotate(-20deg);
+}
+
+.bow-loop.right {
+  right: 2px;
+  transform: rotate(20deg);
+}
+
+.bow-knot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #7a5c10;
+  border-radius: 50%;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.bow-tail {
+  position: absolute;
+  width: 3px;
+  height: 18px;
+  background: linear-gradient(180deg, #8b6914, #6b4f0e);
+  top: 14px;
+  border-radius: 1px;
+}
+
+.bow-tail.left {
+  left: 16px;
+  transform: rotate(15deg);
+}
+
+.bow-tail.right {
+  right: 16px;
+  transform: rotate(-15deg);
+}
+
+/* Book */
+.book-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition-delay: 0.8s;
+  cursor: pointer;
+  z-index: 5;
+}
+
+.box-wrapper.opened .book-wrapper {
+  transform: translate(-50%, -80%) scale(1);
+  opacity: 1;
+}
+
+.book {
+  width: 160px;
+  height: 210px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+}
+
+.book:hover {
+  transform: rotateY(-5deg) translateY(-4px);
+}
+
+.book-cover {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(145deg, #8b4513 0%, #6b3410 50%, #5a2d0e 100%);
+  border-radius: 3px 8px 8px 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-shadow:
+    -3px 0 6px rgba(0,0,0,0.2),
+    inset 6px 0 12px rgba(0,0,0,0.15),
+    0 8px 24px rgba(61, 43, 31, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.book-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 1px,
+      rgba(255,255,255,0.02) 1px,
+      rgba(255,255,255,0.02) 2px
+    );
+}
+
+.book-cover::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(0,0,0,0.3);
+}
+
+.book-spine {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background: linear-gradient(90deg, #4a2008, #5a2d0e);
+  border-radius: 3px 0 0 3px;
+}
+
+.book-title {
+  font-family: "Nanum Myeongjo", "Batang", Georgia, serif;
+  font-size: 18px;
+  color: var(--sunflower);
+  text-align: center;
+  line-height: 1.6;
+  position: relative;
+  z-index: 1;
+}
+
+.book-subtitle {
+  font-size: 11px;
+  color: var(--film);
+  margin-top: 12px;
+  letter-spacing: 2px;
+  position: relative;
+  z-index: 1;
+}
+
+.book-decoration {
+  width: 40px;
+  height: 1px;
+  background: var(--sunflower);
+  margin: 14px 0;
+  opacity: 0.6;
+  position: relative;
+  z-index: 1;
+}
+
+/* Page flip preview */
+.page-flip-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(61, 43, 31, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  backdrop-filter: blur(4px);
+}
+
+.page-flip-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.open-book {
+  width: 320px;
+  height: 420px;
+  position: relative;
+  transform-style: preserve-3d;
+  perspective: 1200px;
+}
+
+.page {
+  position: absolute;
+  width: 50%;
+  height: 100%;
+  background: #faf6ee;
+  transform-origin: left center;
+  transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  font-family: "Nanum Myeongjo", Georgia, serif;
+  font-size: 13px;
+  line-height: 2;
+  color: var(--ink);
+  border: 1px solid rgba(61, 43, 31, 0.08);
+}
+
+.page-left {
+  left: 0;
+  border-radius: 4px 0 0 4px;
+  box-shadow: inset -4px 0 8px rgba(0,0,0,0.05);
+}
+
+.page-right {
+  left: 50%;
+  border-radius: 0 4px 4px 0;
+  box-shadow: inset 4px 0 8px rgba(0,0,0,0.05);
+}
+
+.page-flip-1 {
+  left: 50%;
+  transform-origin: left center;
+  z-index: 3;
+  border-radius: 0 4px 4px 0;
+}
+
+.page-flip-1.flipped {
+  transform: rotateY(-180deg);
+}
+
+.page-flip-2 {
+  left: 50%;
+  transform-origin: left center;
+  z-index: 2;
+  border-radius: 0 4px 4px 0;
+  transition-delay: 0.5s;
+}
+
+.page-flip-2.flipped {
+  transform: rotateY(-180deg);
+}
+
+.page-number {
+  position: absolute;
+  bottom: 16px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.close-preview {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(255,255,255,0.2);
+  color: white;
+  font-size: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+}
+
+.close-preview:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+/* Label */
+.mockup-label {
+  position: absolute;
+  bottom: 24px;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  opacity: 0.7;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translate(-50%, -80%) scale(1); }
+  50% { transform: translate(-50%, -84%) scale(1); }
+}
+
+.box-wrapper.opened .book-wrapper {
+  animation: float 3s ease-in-out infinite;
+  animation-delay: 1.6s;
+}
+
+@keyframes pulse-hint {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.hint {
+  animation: pulse-hint 2s ease-in-out infinite;
+}
+
+/* Confetti-like particles on open */
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.box-wrapper.opened .particle {
+  animation: particle-rise 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes particle-rise {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty)) scale(0);
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="scene">
+  <p class="hint" id="hint">tap to open your gift</p>
+
+  <div class="box-wrapper" id="boxWrapper">
+    <!-- Particles -->
+    <div class="particle" style="--tx: -60px; --ty: -80px; background: var(--sunflower); top: 40%; left: 30%; animation-delay: 0.1s;"></div>
+    <div class="particle" style="--tx: 70px; --ty: -90px; background: var(--rose); top: 40%; left: 60%; animation-delay: 0.2s;"></div>
+    <div class="particle" style="--tx: -40px; --ty: -110px; background: var(--film); top: 35%; left: 50%; animation-delay: 0.15s;"></div>
+    <div class="particle" style="--tx: 50px; --ty: -70px; background: var(--sunflower); top: 45%; left: 40%; animation-delay: 0.25s;"></div>
+    <div class="particle" style="--tx: -80px; --ty: -60px; background: var(--rose); top: 50%; left: 35%; animation-delay: 0.3s;"></div>
+    <div class="particle" style="--tx: 90px; --ty: -100px; background: var(--film); top: 38%; left: 65%; animation-delay: 0.05s;"></div>
+
+    <!-- Book inside box -->
+    <div class="book-wrapper" id="bookWrapper">
+      <div class="book" id="book">
+        <div class="book-spine"></div>
+        <div class="book-cover">
+          <div class="book-decoration"></div>
+          <div class="book-title">우리의<br>100일 일기</div>
+          <div class="book-decoration"></div>
+          <div class="book-subtitle">OUR 100 DAYS</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Box -->
+    <div class="box">
+      <div class="box-face box-front"></div>
+      <div class="box-face box-back"></div>
+      <div class="box-face box-left"></div>
+      <div class="box-face box-right"></div>
+      <div class="box-face box-bottom"></div>
+
+      <!-- Lid -->
+      <div class="box-lid" id="boxLid">
+        <div class="lid-top">
+          <div class="ribbon-h"></div>
+          <div class="ribbon-v"></div>
+          <div class="bow">
+            <div class="bow-loop left"></div>
+            <div class="bow-loop right"></div>
+            <div class="bow-knot"></div>
+            <div class="bow-tail left"></div>
+            <div class="bow-tail right"></div>
+          </div>
+        </div>
+        <div class="lid-front"></div>
+      </div>
+    </div>
+
+    <div class="box-shadow"></div>
+  </div>
+
+  <!-- Page flip overlay -->
+  <div class="page-flip-overlay" id="pageFlipOverlay">
+    <button class="close-preview" id="closePreview">&times;</button>
+    <div class="open-book">
+      <div class="page page-left">
+        <div style="text-align: center;">
+          <p style="font-size: 11px; color: var(--muted); margin-bottom: 12px;">Day 1</p>
+          <p>처음 만난 날,<br>네가 웃었고<br>나는 멈췄다.</p>
+          <span class="page-number" style="left: 16px;">1</span>
+        </div>
+      </div>
+      <div class="page page-right page-flip-1" id="pageFlip1">
+        <div style="text-align: center;">
+          <p style="font-size: 11px; color: var(--muted); margin-bottom: 12px;">Day 50</p>
+          <p>반쯤 왔을 때,<br>이미 돌아갈 수<br>없다는 걸 알았다.</p>
+          <span class="page-number" style="right: 16px;">2</span>
+        </div>
+      </div>
+      <div class="page page-right page-flip-2" id="pageFlip2">
+        <div style="text-align: center;">
+          <p style="font-size: 11px; color: var(--muted); margin-bottom: 12px;">Day 100</p>
+          <p>오늘,<br>아직도 네가 웃으면<br>나는 멈춘다.</p>
+          <span class="page-number" style="right: 16px;">3</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="mockup-label">design mockup 01 — craft paper box</p>
+</div>
+
+<script>
+(function() {
+  const boxWrapper = document.getElementById('boxWrapper');
+  const hint = document.getElementById('hint');
+  const book = document.getElementById('book');
+  const bookWrapper = document.getElementById('bookWrapper');
+  const pageFlipOverlay = document.getElementById('pageFlipOverlay');
+  const closePreview = document.getElementById('closePreview');
+  const pageFlip1 = document.getElementById('pageFlip1');
+  const pageFlip2 = document.getElementById('pageFlip2');
+
+  let boxOpened = false;
+
+  // Open box on click
+  boxWrapper.addEventListener('click', function(e) {
+    if (boxOpened) return;
+    if (e.target.closest('.book-wrapper')) return;
+
+    boxOpened = true;
+    boxWrapper.classList.add('opened');
+    hint.classList.add('hidden');
+
+    // Update hint after animation
+    setTimeout(function() {
+      hint.textContent = 'tap the book to peek inside';
+      hint.classList.remove('hidden');
+    }, 2000);
+  });
+
+  // Book click - show page flip
+  bookWrapper.addEventListener('click', function(e) {
+    if (!boxOpened) return;
+    e.stopPropagation();
+
+    pageFlipOverlay.classList.add('active');
+    hint.classList.add('hidden');
+
+    // Trigger page flips
+    setTimeout(function() {
+      pageFlip1.classList.add('flipped');
+    }, 600);
+
+    setTimeout(function() {
+      pageFlip2.classList.add('flipped');
+    }, 1400);
+  });
+
+  // Close preview
+  closePreview.addEventListener('click', function() {
+    pageFlipOverlay.classList.remove('active');
+    pageFlip1.classList.remove('flipped');
+    pageFlip2.classList.remove('flipped');
+  });
+
+  // Close on overlay click
+  pageFlipOverlay.addEventListener('click', function(e) {
+    if (e.target === pageFlipOverlay) {
+      pageFlipOverlay.classList.remove('active');
+      pageFlip1.classList.remove('flipped');
+      pageFlip2.classList.remove('flipped');
+    }
+  });
+})();
+</script>
+</body>
+</html>

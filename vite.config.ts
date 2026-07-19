@@ -1,0 +1,19 @@
+import { fileURLToPath, URL } from 'node:url'
+
+import vue from '@vitejs/plugin-vue'
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+  base: process.env.GITHUB_PAGES_BASE ?? './',
+  plugins: [vue()],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  test: {
+    environment: 'jsdom',
+    exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
+    globals: true,
+  },
+})

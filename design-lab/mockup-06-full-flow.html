@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Design Mockup 06 — Complete Flow</title>
+<style>
+:root {
+  --paper: #f7eedc;
+  --ivory: #fff9ed;
+  --ink: #3d2b1f;
+  --muted: #7c6652;
+  --film: #d8be91;
+  --rose: #c9827f;
+  --sunflower: #f4be3a;
+  --leaf: #7e8a56;
+  --kraft: #8B6B4A;
+  --kraft-light: #a8885e;
+  --kraft-dark: #6b5238;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Georgia', 'Noto Serif KR', serif;
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.scene {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  perspective: 1200px;
+  position: relative;
+}
+
+/* ===== PHASE 1: GIFT BOX ===== */
+.gift-box-container {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.gift-box-container.hidden {
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+}
+
+.gift-box {
+  position: relative;
+  width: 220px;
+  height: 180px;
+  cursor: pointer;
+  transform-style: preserve-3d;
+}
+
+.box-body {
+  position: absolute;
+  bottom: 0;
+  width: 220px;
+  height: 140px;
+  background: linear-gradient(145deg, var(--kraft-light), var(--kraft));
+  border-radius: 4px;
+  box-shadow: 0 8px 32px rgba(59, 43, 31, 0.3), inset 0 -4px 8px rgba(0,0,0,0.1);
+}
+
+/* Kraft paper texture */
+.box-body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,0.02) 3px,
+    rgba(0,0,0,0.02) 4px
+  );
+  border-radius: 4px;
+}
+
+.box-lid {
+  position: absolute;
+  top: 0;
+  left: -6px;
+  width: 232px;
+  height: 40px;
+  background: linear-gradient(145deg, var(--kraft-light), var(--kraft));
+  border-radius: 4px 4px 2px 2px;
+  box-shadow: 0 4px 12px rgba(59, 43, 31, 0.2);
+  transform-origin: bottom center;
+  transition: transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.box-lid.open {
+  transform: rotateX(-110deg) translateY(-10px);
+}
+
+/* Twine bow */
+.twine-bow {
+  position: absolute;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+.twine-vertical {
+  position: absolute;
+  left: 50%;
+  top: 20px;
+  width: 3px;
+  height: 150px;
+  background: #a0784c;
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.twine-horizontal {
+  position: absolute;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 226px;
+  height: 3px;
+  background: #a0784c;
+  border-radius: 2px;
+}
+
+.bow-loop-left, .bow-loop-right {
+  position: absolute;
+  top: 10px;
+  width: 28px;
+  height: 20px;
+  border: 3px solid #a0784c;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.bow-loop-left {
+  left: 50%;
+  transform: translateX(-130%) rotate(-20deg);
+}
+
+.bow-loop-right {
+  left: 50%;
+  transform: translateX(30%) rotate(20deg);
+}
+
+.bow-knot {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  background: #a0784c;
+  border-radius: 50%;
+}
+
+/* Name tag */
+.name-tag {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(20px);
+  background: var(--ivory);
+  padding: 6px 12px;
+  border-radius: 3px;
+  font-size: 12px;
+  color: var(--ink);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  white-space: nowrap;
+}
+
+.name-tag::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 12px;
+  width: 1px;
+  height: 8px;
+  background: #a0784c;
+}
+
+.tap-hint {
+  margin-top: 30px;
+  font-size: 13px;
+  color: var(--muted);
+  opacity: 0;
+  animation: fadeInHint 1s ease 1.5s forwards;
+  letter-spacing: 0.5px;
+}
+
+@keyframes fadeInHint {
+  to { opacity: 1; }
+}
+
+/* ===== PHASE 2: BOOK IN BOX / RISING ===== */
+.book-container {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease, transform 0.8s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.book-container.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.book-container.in-box {
+  transform: translateY(20px) scale(0.7);
+}
+
+.book-container.centered {
+  transform: translateY(0) scale(1);
+}
+
+.book-cover {
+  width: 260px;
+  height: 360px;
+  background: linear-gradient(135deg, var(--kraft-dark), var(--kraft));
+  border-radius: 4px 12px 12px 4px;
+  box-shadow: 0 10px 40px rgba(59, 43, 31, 0.35),
+              inset 2px 0 4px rgba(255,255,255,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  padding: 30px;
+  transform-style: preserve-3d;
+}
+
+/* Spine effect */
+.book-cover::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.2), transparent);
+  border-radius: 4px 0 0 4px;
+}
+
+.book-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--ivory);
+  text-align: center;
+  line-height: 1.6;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  margin-bottom: 30px;
+}
+
+/* Pressed flower decoration (CSS only) */
+.pressed-flower {
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+
+.petal {
+  position: absolute;
+  width: 18px;
+  height: 28px;
+  background: var(--rose);
+  border-radius: 50% 50% 50% 50%;
+  opacity: 0.7;
+  top: 50%;
+  left: 50%;
+}
+
+.petal:nth-child(1) { transform: translate(-50%, -80%) rotate(0deg); }
+.petal:nth-child(2) { transform: translate(-50%, -80%) rotate(72deg); transform-origin: 50% 140%; }
+.petal:nth-child(3) { transform: translate(-50%, -80%) rotate(144deg); transform-origin: 50% 140%; }
+.petal:nth-child(4) { transform: translate(-50%, -80%) rotate(216deg); transform-origin: 50% 140%; }
+.petal:nth-child(5) { transform: translate(-50%, -80%) rotate(288deg); transform-origin: 50% 140%; }
+
+.flower-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  background: var(--sunflower);
+  border-radius: 50%;
+  opacity: 0.8;
+}
+
+.flower-leaf {
+  position: absolute;
+  bottom: -5px;
+  width: 14px;
+  height: 22px;
+  background: var(--leaf);
+  border-radius: 50% 0 50% 50%;
+  opacity: 0.6;
+}
+
+.flower-leaf:nth-of-type(7) {
+  left: 10px;
+  transform: rotate(-20deg);
+}
+
+.flower-leaf:nth-of-type(8) {
+  right: 10px;
+  transform: rotate(20deg) scaleX(-1);
+}
+
+/* ===== PHASE 3: READING MODE ===== */
+.reading-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+  perspective: 1200px;
+}
+
+.reading-container.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.book-reader {
+  position: relative;
+  width: 320px;
+  height: 460px;
+  transform-style: preserve-3d;
+}
+
+.page {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: var(--ivory);
+  border-radius: 4px 12px 12px 4px;
+  box-shadow: 0 4px 20px rgba(59, 43, 31, 0.15);
+  padding: 50px 35px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  backface-visibility: hidden;
+  transform-origin: left center;
+  transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1),
+              box-shadow 0.8s ease;
+}
+
+/* Paper texture */
+.page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(247, 238, 220, 0.3) 0%, transparent 50%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 28px,
+      rgba(200, 180, 150, 0.05) 28px,
+      rgba(200, 180, 150, 0.05) 29px
+    );
+  border-radius: 4px 12px 12px 4px;
+  pointer-events: none;
+}
+
+/* Spine shadow on left */
+.page::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 25px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.06), transparent);
+  border-radius: 4px 0 0 4px;
+  pointer-events: none;
+}
+
+.page.flipped {
+  transform: rotateY(-180deg);
+  box-shadow: 10px 4px 20px rgba(59, 43, 31, 0.2);
+}
+
+.page.flipping {
+  box-shadow: -8px 4px 25px rgba(59, 43, 31, 0.3);
+}
+
+.page-number {
+  position: absolute;
+  bottom: 25px;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+.page h2 {
+  font-size: 18px;
+  color: var(--ink);
+  line-height: 2;
+  font-weight: normal;
+  letter-spacing: 0.5px;
+}
+
+.page p {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 2;
+  letter-spacing: 0.3px;
+}
+
+.page .date-badge {
+  display: inline-block;
+  background: var(--paper);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--kraft);
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.page .milestone {
+  font-size: 16px;
+  color: var(--ink);
+  line-height: 2;
+  margin-top: 10px;
+}
+
+.page .love-note {
+  font-size: 16px;
+  color: var(--ink);
+  line-height: 2.4;
+  font-style: italic;
+}
+
+.page .divider {
+  width: 40px;
+  height: 2px;
+  background: var(--film);
+  margin: 20px auto;
+  border-radius: 1px;
+}
+
+/* Navigation hints */
+.nav-hint {
+  position: absolute;
+  bottom: 60px;
+  font-size: 12px;
+  color: var(--muted);
+  opacity: 0.6;
+  letter-spacing: 0.5px;
+}
+
+.nav-zone-left, .nav-zone-right {
+  position: absolute;
+  top: 0;
+  width: 40%;
+  height: 100%;
+  z-index: 10;
+  cursor: pointer;
+}
+
+.nav-zone-left {
+  left: 0;
+}
+
+.nav-zone-right {
+  right: 0;
+}
+
+/* ===== COVER FLIP ANIMATION ===== */
+.cover-page {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--kraft-dark), var(--kraft));
+  border-radius: 4px 12px 12px 4px;
+  transform-origin: left center;
+  transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+  box-shadow: 0 4px 20px rgba(59, 43, 31, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+  z-index: 20;
+}
+
+.cover-page.flipped {
+  transform: rotateY(-170deg);
+  box-shadow: 10px 4px 25px rgba(59, 43, 31, 0.3);
+}
+
+/* ===== RESTART BUTTON ===== */
+.restart-btn {
+  position: fixed;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: transparent;
+  border: 1px solid var(--film);
+  color: var(--muted);
+  padding: 10px 24px;
+  border-radius: 24px;
+  font-size: 12px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.restart-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.restart-btn:hover {
+  background: var(--film);
+  color: var(--ink);
+}
+
+/* ===== LABEL ===== */
+.mockup-label {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--muted);
+  opacity: 0.5;
+  letter-spacing: 1.5px;
+  text-transform: lowercase;
+  white-space: nowrap;
+  z-index: 100;
+}
+
+/* ===== ENTRANCE ANIMATION ===== */
+@keyframes floatIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.gift-box-container {
+  animation: floatIn 1s ease-out forwards;
+}
+
+/* ===== PARTICLE EFFECT ===== */
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+}
+
+@keyframes particleBurst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty)) scale(0);
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="scene" id="scene">
+  <!-- PHASE 1: Gift Box -->
+  <div class="gift-box-container" id="giftBoxContainer">
+    <div class="gift-box" id="giftBox">
+      <div class="box-lid" id="boxLid"></div>
+      <div class="box-body"></div>
+      <div class="twine-bow">
+        <div class="twine-vertical"></div>
+        <div class="twine-horizontal"></div>
+        <div class="bow-loop-left"></div>
+        <div class="bow-loop-right"></div>
+        <div class="bow-knot"></div>
+        <div class="name-tag">苙綺에게</div>
+      </div>
+    </div>
+    <div class="tap-hint">탭하여 열어보세요</div>
+  </div>
+
+  <!-- PHASE 2: Book -->
+  <div class="book-container" id="bookContainer">
+    <div class="book-cover" id="bookCover">
+      <div class="book-title">우리의<br>100일 일기</div>
+      <div class="pressed-flower">
+        <div class="petal"></div>
+        <div class="petal"></div>
+        <div class="petal"></div>
+        <div class="petal"></div>
+        <div class="petal"></div>
+        <div class="flower-center"></div>
+        <div class="flower-leaf"></div>
+        <div class="flower-leaf"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 3: Reading -->
+  <div class="reading-container" id="readingContainer">
+    <div class="book-reader" id="bookReader">
+      <!-- Cover that flips open -->
+      <div class="cover-page" id="coverPage">
+        <div class="book-title" style="font-size:16px;">우리의<br>100일 일기</div>
+      </div>
+
+      <!-- Page 3 (bottom) -->
+      <div class="page" id="page3" style="z-index: 1;">
+        <div class="love-note">
+          매일이 너와 함께라<br>
+          특별하지 않은 날이<br>
+          없었어.
+        </div>
+        <div class="divider"></div>
+        <p style="font-size: 13px; margin-top: 10px;">앞으로도, 계속.</p>
+        <span class="page-number">3</span>
+      </div>
+
+      <!-- Page 2 -->
+      <div class="page" id="page2" style="z-index: 2;">
+        <div class="date-badge">2026. 04. 10</div>
+        <div class="divider"></div>
+        <div class="milestone">
+          처음 함께 걸었던 길,<br>
+          봄바람이 우리 사이를<br>
+          스쳐 지나가던 날.
+        </div>
+        <p style="font-size: 13px; margin-top: 24px; color: var(--muted);">— 첫 산책</p>
+        <span class="page-number">2</span>
+      </div>
+
+      <!-- Page 1 (top) -->
+      <div class="page" id="page1" style="z-index: 3;">
+        <h2>이 책은<br>우리가 함께한<br>100일의<br>이야기입니다</h2>
+        <div class="divider"></div>
+        <p style="font-size:12px; margin-top: 8px;">한 장 한 장 넘겨보세요</p>
+        <span class="page-number">1</span>
+      </div>
+
+      <!-- Navigation zones -->
+      <div class="nav-zone-left" id="navLeft"></div>
+      <div class="nav-zone-right" id="navRight"></div>
+    </div>
+    <div class="nav-hint">좌우를 탭하여 넘기세요</div>
+  </div>
+</div>
+
+<button class="restart-btn" id="restartBtn">다시 보기</button>
+<div class="mockup-label">design mockup 06 — complete flow</div>
+
+<script>
+(function() {
+  // State
+  let phase = 'box'; // box, book-reveal, reading
+  let currentPage = 0; // 0 = cover shown, 1-3 = pages
+  const totalPages = 3;
+
+  // Elements
+  const giftBoxContainer = document.getElementById('giftBoxContainer');
+  const giftBox = document.getElementById('giftBox');
+  const boxLid = document.getElementById('boxLid');
+  const bookContainer = document.getElementById('bookContainer');
+  const bookCover = document.getElementById('bookCover');
+  const readingContainer = document.getElementById('readingContainer');
+  const coverPage = document.getElementById('coverPage');
+  const navLeft = document.getElementById('navLeft');
+  const navRight = document.getElementById('navRight');
+  const restartBtn = document.getElementById('restartBtn');
+  const scene = document.getElementById('scene');
+
+  // Phase 1: Tap gift box to open
+  giftBox.addEventListener('click', function() {
+    if (phase !== 'box') return;
+    openGiftBox();
+  });
+
+  function openGiftBox() {
+    phase = 'opening';
+    boxLid.classList.add('open');
+
+    // Create particles
+    createParticles(giftBox);
+
+    // After lid opens, show book inside
+    setTimeout(function() {
+      bookContainer.classList.add('visible', 'in-box');
+    }, 600);
+
+    // Then fade out box, bring book forward
+    setTimeout(function() {
+      giftBoxContainer.classList.add('hidden');
+    }, 1400);
+
+    setTimeout(function() {
+      bookContainer.classList.remove('in-box');
+      bookContainer.classList.add('centered');
+      phase = 'book-reveal';
+    }, 1800);
+  }
+
+  // Phase 2: Tap book to start reading
+  bookCover.addEventListener('click', function() {
+    if (phase !== 'book-reveal') return;
+    openBook();
+  });
+
+  function openBook() {
+    phase = 'transitioning';
+
+    // Fade out the standalone book cover
+    bookContainer.style.transition = 'opacity 0.5s ease';
+    bookContainer.style.opacity = '0';
+
+    setTimeout(function() {
+      bookContainer.classList.remove('visible');
+      bookContainer.style.opacity = '';
+
+      // Show reading mode
+      readingContainer.classList.add('visible');
+
+      // Flip the cover open after a brief moment
+      setTimeout(function() {
+        coverPage.classList.add('flipped');
+        phase = 'reading';
+        currentPage = 1;
+        restartBtn.classList.add('visible');
+      }, 400);
+    }, 500);
+  }
+
+  // Phase 3: Page navigation
+  navRight.addEventListener('click', function() {
+    if (phase !== 'reading') return;
+    nextPage();
+  });
+
+  navLeft.addEventListener('click', function() {
+    if (phase !== 'reading') return;
+    prevPage();
+  });
+
+  function nextPage() {
+    if (currentPage >= totalPages) return;
+
+    const page = document.getElementById('page' + currentPage);
+    if (page) {
+      page.classList.add('flipping');
+      setTimeout(function() {
+        page.classList.add('flipped');
+        page.classList.remove('flipping');
+      }, 50);
+      currentPage++;
+    }
+  }
+
+  function prevPage() {
+    if (currentPage <= 1) return;
+
+    currentPage--;
+    const page = document.getElementById('page' + currentPage);
+    if (page) {
+      page.classList.remove('flipped', 'flipping');
+    }
+  }
+
+  // Swipe support
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  readingContainer.addEventListener('touchstart', function(e) {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+
+  readingContainer.addEventListener('touchend', function(e) {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  }, { passive: true });
+
+  function handleSwipe() {
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        nextPage(); // swipe left = next
+      } else {
+        prevPage(); // swipe right = prev
+      }
+    }
+  }
+
+  // Restart
+  restartBtn.addEventListener('click', function() {
+    restart();
+  });
+
+  function restart() {
+    phase = 'box';
+    currentPage = 0;
+
+    // Reset all states
+    readingContainer.classList.remove('visible');
+    restartBtn.classList.remove('visible');
+    coverPage.classList.remove('flipped');
+
+    // Reset pages
+    for (let i = 1; i <= totalPages; i++) {
+      document.getElementById('page' + i).classList.remove('flipped', 'flipping');
+    }
+
+    // Reset book container
+    bookContainer.classList.remove('visible', 'in-box', 'centered');
+    bookContainer.style.opacity = '';
+    bookContainer.style.transition = '';
+
+    // Reset gift box
+    boxLid.classList.remove('open');
+    giftBoxContainer.classList.remove('hidden');
+    giftBoxContainer.style.animation = 'none';
+
+    // Trigger reflow and re-add animation
+    setTimeout(function() {
+      giftBoxContainer.style.animation = '';
+    }, 50);
+  }
+
+  // Particle burst effect
+  function createParticles(anchor) {
+    const rect = anchor.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 4;
+    const colors = [
+      'var(--sunflower)', 'var(--rose)', 'var(--film)',
+      'var(--leaf)', 'var(--ivory)'
+    ];
+
+    for (let i = 0; i < 12; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      const angle = (Math.PI * 2 * i) / 12;
+      const distance = 60 + Math.random() * 40;
+      const tx = Math.cos(angle) * distance;
+      const ty = Math.sin(angle) * distance - 30;
+
+      particle.style.left = cx + 'px';
+      particle.style.top = cy + 'px';
+      particle.style.background = colors[i % colors.length];
+      particle.style.setProperty('--tx', tx + 'px');
+      particle.style.setProperty('--ty', ty + 'px');
+      particle.style.animation = 'particleBurst 0.8s ease-out forwards';
+      particle.style.animationDelay = (i * 0.03) + 's';
+
+      scene.appendChild(particle);
+
+      setTimeout(function() {
+        particle.remove();
+      }, 1200);
+    }
+  }
+})();
+</script>
+</body>
+</html>

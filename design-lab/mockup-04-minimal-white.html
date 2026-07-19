@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Mockup 04 — Minimal White</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap');
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    background: #f7eedc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    min-height: 100dvh;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  .scene {
+    width: 390px;
+    max-width: 100vw;
+    height: 844px;
+    max-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    perspective: 1200px;
+  }
+
+  /* --- Gift Box --- */
+  .gift-box-wrapper {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .gift-box-wrapper:hover {
+    transform: translateY(-2px);
+  }
+
+  .gift-box-wrapper.opened {
+    pointer-events: none;
+  }
+
+  .gift-box {
+    position: relative;
+    width: 180px;
+    height: 140px;
+    transform-style: preserve-3d;
+  }
+
+  .box-body {
+    width: 180px;
+    height: 100px;
+    background: #ffffff;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    border-radius: 2px;
+    box-shadow:
+      0 2px 8px rgba(61, 43, 31, 0.04),
+      0 8px 32px rgba(61, 43, 31, 0.06);
+  }
+
+  .box-lid {
+    width: 190px;
+    height: 45px;
+    background: #ffffff;
+    position: absolute;
+    top: 0;
+    left: -5px;
+    border-radius: 2px 2px 0 0;
+    box-shadow:
+      0 -1px 4px rgba(61, 43, 31, 0.03),
+      0 2px 8px rgba(61, 43, 31, 0.04);
+    transform-origin: bottom left;
+    transition: transform 1.8s cubic-bezier(0.23, 1, 0.32, 1);
+    transform-style: preserve-3d;
+    z-index: 2;
+  }
+
+  .gift-box-wrapper.opened .box-lid {
+    transform: rotateX(-110deg) translateZ(10px);
+  }
+
+  /* Lid top text */
+  .lid-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Noto Serif KR', serif;
+    font-weight: 300;
+    font-size: 14px;
+    color: #3d2b1f;
+    letter-spacing: 4px;
+    opacity: 0.7;
+  }
+
+  /* --- Ribbon --- */
+  .ribbon-h {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 100%;
+    background: #c9827f;
+    opacity: 0.8;
+    z-index: 1;
+  }
+
+  .ribbon-v {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .ribbon-v::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: #c9827f;
+    opacity: 0.8;
+  }
+
+  /* Ribbon cross on lid */
+  .ribbon-lid-h {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: #c9827f;
+    opacity: 0.8;
+    transform: translateY(-50%);
+  }
+
+  .ribbon-lid-v {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 1px;
+    height: 100%;
+    background: #c9827f;
+    opacity: 0.8;
+    transform: translateX(-50%);
+  }
+
+  /* Ribbon fade on open */
+  .gift-box-wrapper.opened .ribbon-h,
+  .gift-box-wrapper.opened .ribbon-v::before,
+  .gift-box-wrapper.opened .ribbon-lid-h,
+  .gift-box-wrapper.opened .ribbon-lid-v {
+    opacity: 0;
+    transition: opacity 0.8s ease 0.2s;
+  }
+
+  /* --- Book --- */
+  .book-wrapper {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) translateY(30px);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity 1.6s cubic-bezier(0.23, 1, 0.32, 1) 1.2s,
+      transform 1.6s cubic-bezier(0.23, 1, 0.32, 1) 1.2s;
+    cursor: pointer;
+  }
+
+  .book-wrapper.visible {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(-20px);
+    pointer-events: auto;
+  }
+
+  .book {
+    width: 160px;
+    height: 220px;
+    position: relative;
+    transform-style: preserve-3d;
+    transform: rotateY(-5deg);
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .book:hover {
+    transform: rotateY(-8deg) translateY(-3px);
+  }
+
+  .book-cover {
+    width: 100%;
+    height: 100%;
+    background: #fefefe;
+    border-radius: 2px 6px 6px 2px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 2px 8px rgba(61, 43, 31, 0.06),
+      0 12px 40px rgba(61, 43, 31, 0.08),
+      -2px 0 4px rgba(61, 43, 31, 0.03);
+    /* Cloth texture via CSS noise */
+    background-image:
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.015'/%3E%3C/svg%3E");
+    background-color: #fefefe;
+  }
+
+  .book-spine {
+    position: absolute;
+    top: 0;
+    left: -8px;
+    width: 8px;
+    height: 100%;
+    background: #f8f6f3;
+    border-radius: 2px 0 0 2px;
+    transform: rotateY(-90deg);
+    transform-origin: right center;
+    box-shadow: inset -1px 0 2px rgba(61, 43, 31, 0.05);
+  }
+
+  .book-title {
+    font-family: 'Noto Serif KR', serif;
+    font-weight: 300;
+    font-size: 15px;
+    color: #3d2b1f;
+    letter-spacing: 1px;
+    line-height: 1.8;
+    text-align: center;
+  }
+
+  .book-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: 11px;
+    color: #3d2b1f;
+    opacity: 0.5;
+    margin-top: 12px;
+    letter-spacing: 2px;
+  }
+
+  /* --- Page Flip Preview --- */
+  .page-preview {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(247, 238, 220, 0.97);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+    z-index: 100;
+  }
+
+  .page-preview.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .page {
+    width: 280px;
+    height: 400px;
+    background: #ffffff;
+    border-radius: 2px;
+    box-shadow:
+      0 2px 12px rgba(61, 43, 31, 0.06),
+      0 20px 60px rgba(61, 43, 31, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    position: relative;
+    transform-style: preserve-3d;
+    animation: none;
+  }
+
+  .page.flipping {
+    animation: pageFlip 1.2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  @keyframes pageFlip {
+    0% {
+      transform: rotateY(0deg);
+      opacity: 1;
+    }
+    50% {
+      transform: rotateY(-90deg);
+      opacity: 0.5;
+    }
+    51% {
+      transform: rotateY(90deg);
+      opacity: 0.5;
+    }
+    100% {
+      transform: rotateY(0deg);
+      opacity: 1;
+    }
+  }
+
+  .page-number {
+    position: absolute;
+    bottom: 20px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px;
+    color: #3d2b1f;
+    opacity: 0.4;
+  }
+
+  .page-content {
+    font-family: 'Noto Serif KR', serif;
+    font-weight: 300;
+    font-size: 14px;
+    color: #3d2b1f;
+    line-height: 2.2;
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  .page-close {
+    margin-top: 30px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    color: #3d2b1f;
+    opacity: 0.4;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+  }
+
+  .page-close:hover {
+    opacity: 0.7;
+  }
+
+  /* --- Hint --- */
+  .hint {
+    position: absolute;
+    bottom: 120px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    color: #3d2b1f;
+    opacity: 0;
+    letter-spacing: 2px;
+    animation: hintFade 3s ease-in-out 2s forwards;
+  }
+
+  @keyframes hintFade {
+    0% { opacity: 0; transform: translateY(5px); }
+    50% { opacity: 0.4; transform: translateY(0); }
+    100% { opacity: 0.4; transform: translateY(0); }
+  }
+
+  .hint.hidden {
+    animation: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  /* --- Label --- */
+  .label {
+    position: absolute;
+    bottom: 30px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10px;
+    color: #3d2b1f;
+    opacity: 0.25;
+    letter-spacing: 3px;
+    text-transform: lowercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="scene">
+
+  <!-- Gift Box -->
+  <div class="gift-box-wrapper" id="giftBox">
+    <div class="gift-box">
+      <!-- Lid -->
+      <div class="box-lid">
+        <span class="lid-text">苙綺</span>
+        <div class="ribbon-lid-h"></div>
+        <div class="ribbon-lid-v"></div>
+      </div>
+      <!-- Body -->
+      <div class="box-body">
+        <div class="ribbon-h"></div>
+        <div class="ribbon-v"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Book -->
+  <div class="book-wrapper" id="bookWrapper">
+    <div class="book" id="book">
+      <div class="book-spine"></div>
+      <div class="book-cover">
+        <div class="book-title">우리의 100일 일기</div>
+        <div class="book-subtitle">100 days</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tap hint -->
+  <div class="hint" id="hint">tap to open</div>
+
+  <!-- Label -->
+  <div class="label">design mockup 04 — minimal white</div>
+</div>
+
+<!-- Page flip preview -->
+<div class="page-preview" id="pagePreview">
+  <div class="page" id="page">
+    <div class="page-content" id="pageContent"></div>
+    <div class="page-number" id="pageNumber"></div>
+  </div>
+  <div class="page-close" id="pageClose">tap to turn &middot; hold to close</div>
+</div>
+
+<script>
+(function() {
+  const giftBox = document.getElementById('giftBox');
+  const bookWrapper = document.getElementById('bookWrapper');
+  const book = document.getElementById('book');
+  const hint = document.getElementById('hint');
+  const pagePreview = document.getElementById('pagePreview');
+  const page = document.getElementById('page');
+  const pageContent = document.getElementById('pageContent');
+  const pageNumber = document.getElementById('pageNumber');
+  const pageClose = document.getElementById('pageClose');
+
+  const pages = [
+    '첫 만남의 날,\n설레는 마음을\n아직도 기억해요',
+    '함께 걸었던\n그 길 위에서\n우리는 하나였어요',
+    '작은 것들이\n큰 행복이 되는\n우리의 매일',
+    '100일,\n그리고 앞으로의\n모든 날들도',
+    '함께라서\n감사합니다'
+  ];
+
+  let currentPage = 0;
+  let isBoxOpened = false;
+  let holdTimer = null;
+
+  // Open box
+  giftBox.addEventListener('click', function() {
+    if (isBoxOpened) return;
+    isBoxOpened = true;
+
+    hint.classList.add('hidden');
+    giftBox.classList.add('opened');
+
+    // Show book after lid opens
+    setTimeout(function() {
+      bookWrapper.classList.add('visible');
+      // Fade out box
+      giftBox.style.transition = 'opacity 1s ease 0.5s';
+      giftBox.style.opacity = '0';
+    }, 1000);
+  });
+
+  // Open book preview
+  book.addEventListener('click', function() {
+    currentPage = 0;
+    showPage();
+    pagePreview.classList.add('visible');
+  });
+
+  // Page flip on tap
+  pagePreview.addEventListener('click', function(e) {
+    if (e.target === pageClose || holdTimer) return;
+    flipToNext();
+  });
+
+  // Hold to close
+  pagePreview.addEventListener('mousedown', startHold);
+  pagePreview.addEventListener('touchstart', startHold);
+  pagePreview.addEventListener('mouseup', cancelHold);
+  pagePreview.addEventListener('touchend', cancelHold);
+
+  function startHold() {
+    holdTimer = setTimeout(function() {
+      pagePreview.classList.remove('visible');
+      holdTimer = null;
+    }, 600);
+  }
+
+  function cancelHold() {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  }
+
+  // Close button
+  pageClose.addEventListener('click', function(e) {
+    e.stopPropagation();
+    pagePreview.classList.remove('visible');
+  });
+
+  function showPage() {
+    const text = pages[currentPage].replace(/\n/g, '<br>');
+    pageContent.innerHTML = text;
+    pageNumber.textContent = (currentPage + 1) + ' / ' + pages.length;
+  }
+
+  function flipToNext() {
+    page.classList.add('flipping');
+    setTimeout(function() {
+      currentPage = (currentPage + 1) % pages.length;
+      showPage();
+    }, 600);
+    setTimeout(function() {
+      page.classList.remove('flipping');
+    }, 1200);
+  }
+})();
+</script>
+
+</body>
+</html>
