@@ -198,12 +198,12 @@ export function useBookEngine() {
   })
 
   function flipForward() {
-    if (!canGoForward.value || isFlipping.value) return
+    if (!canGoForward.value) return
     currentIndex.value++
   }
 
   function flipBack() {
-    if (!canGoBack.value || isFlipping.value) return
+    if (!canGoBack.value) return
     currentIndex.value--
   }
 
