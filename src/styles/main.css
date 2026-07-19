@@ -1,13 +1,10 @@
+/* =========================================
+   Gift Box Diary — Design System
+   ========================================= */
+
 :root {
+  /* Color palette */
   color-scheme: light;
-  font-family:
-    Pretendard, "Noto Sans KR", "Noto Sans TC", system-ui, -apple-system, BlinkMacSystemFont,
-    sans-serif;
-  background: #f7eedc;
-  color: #3d2b1f;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
   --paper: #f7eedc;
   --ivory: #fff9ed;
   --ink: #3d2b1f;
@@ -17,22 +14,44 @@
   --sunflower: #f4be3a;
   --leaf: #7e8a56;
   --line: rgba(61, 43, 31, 0.18);
+  --shadow-paper: 0 18px 42px rgba(61, 43, 31, 0.14);
+
+  /* Safe area insets */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* Font rendering */
+  font-family: Pretendard, "Noto Sans KR", "Noto Sans TC", system-ui, -apple-system,
+    BlinkMacSystemFont, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
+
+/* =========================================
+   BASE RESET
+   ========================================= */
 
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html {
   min-width: 320px;
-  background: var(--paper);
+  background: var(--ivory);
+  height: 100vh;
+  height: 100dvh;
 }
 
 body {
   margin: 0;
-  overflow-x: hidden;
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
 }
 
 button {
@@ -40,6 +59,7 @@ button {
   min-height: 44px;
   border: 0;
   font: inherit;
+  cursor: pointer;
 }
 
 button:focus-visible {
@@ -47,36 +67,28 @@ button:focus-visible {
   outline-offset: 3px;
 }
 
-.site-shell {
-  min-height: 100vh;
-  min-height: 100dvh;
-  background:
-    linear-gradient(rgba(61, 43, 31, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(61, 43, 31, 0.025) 1px, transparent 1px), var(--paper);
-  background-size: 28px 28px;
+/* =========================================
+   APP SHELL
+   ========================================= */
+
+.app-shell {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
-.hero-section,
-.paper-section {
-  width: min(100%, 460px);
-  margin: 0 auto;
-  padding: 72px 20px;
-}
+/* =========================================
+   LANGUAGE SWITCHER
+   ========================================= */
 
-.hero-section {
-  display: grid;
-  min-height: 100vh;
-  min-height: 100dvh;
-  align-content: center;
-  padding-top: calc(64px + var(--safe-top));
-  padding-bottom: calc(64px + var(--safe-bottom));
-}
-
+/* NOTE: Language switcher uses stopPropagation to prevent page flip conflicts */
 .language-switcher {
   position: fixed;
   top: calc(12px + var(--safe-top));
   left: 50%;
-  z-index: 10;
+  z-index: 100;
   display: flex;
   gap: 6px;
   width: min(calc(100% - 28px), 360px);
@@ -98,69 +110,515 @@ button:focus-visible {
   color: var(--ivory);
 }
 
-.envelope {
-  position: relative;
-  justify-self: center;
-  width: min(82vw, 300px);
-  aspect-ratio: 1.42;
-  margin-bottom: 34px;
-  border-radius: 8px;
-  background: linear-gradient(145deg, var(--ivory), #ead5ad);
-  box-shadow: 0 22px 50px rgba(61, 43, 31, 0.2);
-  transform-style: preserve-3d;
-  transition: transform 360ms ease;
-}
+/* =========================================
+   PHASE 1: GIFT BOX
+   ========================================= */
 
-.envelope::before {
+.gift-scene {
   position: absolute;
   inset: 0;
-  border-radius: 8px;
-  background: #ead5ad;
-  clip-path: polygon(0 0, 50% 55%, 100% 0, 100% 100%, 0 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--ivory);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+  z-index: 10;
+}
+
+.gift-scene.hidden {
+  opacity: 0;
+  transform: scale(0.85) translateY(20px);
+  pointer-events: none;
+}
+
+.gift-box {
+  position: relative;
+  width: 220px;
+  height: 180px;
+  cursor: pointer;
+}
+
+.box-body {
+  position: absolute;
+  bottom: 0;
+  width: 220px;
+  height: 130px;
+  background: linear-gradient(145deg, #ead5ad, #c9b591 60%, #8b7355);
+  border-radius: 6px;
+  box-shadow: 0 8px 28px rgba(61, 43, 31, 0.25), 0 2px 6px rgba(61, 43, 31, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 6px rgba(0, 0, 0, 0.08);
+}
+
+.box-lid {
+  position: absolute;
+  top: 0;
+  left: -6px;
+  width: 232px;
+  height: 46px;
+  background: linear-gradient(145deg, #ead5ad, #c9b591 50%, #8b7355);
+  border-radius: 4px 4px 2px 2px;
+  box-shadow: 0 4px 12px rgba(61, 43, 31, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform-origin: bottom center;
+  transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.8s ease;
+  z-index: 2;
+}
+
+.gift-box.is-open .box-lid {
+  transform: rotateX(-110deg) translateY(-8px);
+  box-shadow: 0 -2px 8px rgba(61, 43, 31, 0.15);
+}
+
+.box-ribbon {
+  position: absolute;
+  background: var(--sunflower);
+  z-index: 1;
+}
+
+.box-ribbon-vertical {
+  top: 46px;
+  left: 50%;
+  width: 3px;
+  height: 130px;
+  transform: translateX(-50%);
+  border-radius: 1px;
+}
+
+.box-ribbon-horizontal {
+  top: 112px;
+  left: -6px;
+  width: 232px;
+  height: 3px;
+  border-radius: 1px;
+}
+
+.name-tag {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ivory);
+  padding: 5px 12px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-family: "Noto Serif TC", Georgia, serif;
+  color: var(--ink);
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
+  z-index: 4;
+}
+
+.sunflower-decoration {
+  position: absolute;
+  bottom: 16px;
+  right: 22px;
+  width: 28px;
+  height: 28px;
+  opacity: 0.45;
+  z-index: 1;
+}
+
+.sunflower-decoration::before {
   content: "";
-}
-
-.envelope.is-open {
-  transform: translateY(-8px) rotateX(8deg);
-}
-
-.letter-paper {
   position: absolute;
-  right: 12%;
-  bottom: 28%;
-  left: 12%;
-  height: 54%;
-  border-radius: 6px 6px 0 0;
-  background: #fffef8;
-  transform: translateY(22%);
-  transition: transform 360ms ease;
+  width: 9px;
+  height: 9px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--ink);
+  z-index: 2;
 }
 
-.envelope.is-open .letter-paper {
-  transform: translateY(-42%);
-}
-
-.recipient {
+.sunflower-decoration::after {
+  content: "";
   position: absolute;
-  inset: 34% 0 auto;
-  font-family: "Noto Serif TC", serif;
-  font-size: 30px;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(ellipse 36% 13% at 50% 5%, var(--sunflower) 56%, transparent 58%),
+    radial-gradient(ellipse 13% 36% at 95% 50%, var(--sunflower) 56%, transparent 58%),
+    radial-gradient(ellipse 36% 13% at 50% 95%, var(--sunflower) 56%, transparent 58%),
+    radial-gradient(ellipse 13% 36% at 5% 50%, var(--sunflower) 56%, transparent 58%),
+    radial-gradient(ellipse 28% 10% at 80% 20%, var(--sunflower) 50%, transparent 52%),
+    radial-gradient(ellipse 28% 10% at 80% 80%, var(--sunflower) 50%, transparent 52%),
+    radial-gradient(ellipse 28% 10% at 20% 80%, var(--sunflower) 50%, transparent 52%),
+    radial-gradient(ellipse 28% 10% at 20% 20%, var(--sunflower) 50%, transparent 52%);
 }
 
-.eyebrow {
-  margin: 0 0 12px;
-  color: var(--rose);
+.tap-hint {
+  margin-top: 32px;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+/* =========================================
+   PHASE 2: BOOK REVEAL
+   ========================================= */
+
+.book-container {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease, transform 0.8s cubic-bezier(0.34, 1.2, 0.64, 1);
+  z-index: 10;
+}
+
+.book-container.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.book-cover {
+  width: 260px;
+  height: 360px;
+  background: linear-gradient(145deg, #c9b591, #8b7355 60%, #5a3a28);
+  border-radius: 3px 6px 6px 3px;
+  box-shadow: -3px 0 0 #5a3a28, -5px 0 0 #4a2e1e, 0 10px 36px rgba(61, 43, 31, 0.3),
+    0 4px 12px rgba(61, 43, 31, 0.2), inset 2px 0 4px rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  padding: 30px;
+  overflow: hidden;
+  transform-origin: left center;
+  transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.book-cover::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.05) 60%, transparent);
+  border-radius: 4px 0 0 4px;
+  pointer-events: none;
+}
+
+.book-cover.is-flipping {
+  transform: rotateY(-180deg);
+}
+
+.book-title {
+  font-family: "Noto Serif TC", Georgia, serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--sunflower);
+  text-align: center;
+  line-height: 1.6;
+  letter-spacing: 1px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 1;
+}
+
+.pressed-flower {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  margin-top: 16px;
+  opacity: 0.55;
+  z-index: 1;
+}
+
+.pressed-flower::before {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, #2a1d10 50%, var(--ink));
+  z-index: 2;
+}
+
+.pressed-flower::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  z-index: 1;
+  background: radial-gradient(ellipse 36% 13% at 50% 5%, var(--rose) 56%, transparent 58%),
+    radial-gradient(ellipse 13% 36% at 95% 50%, var(--rose) 56%, transparent 58%),
+    radial-gradient(ellipse 36% 13% at 50% 95%, var(--rose) 56%, transparent 58%),
+    radial-gradient(ellipse 13% 36% at 5% 50%, var(--rose) 56%, transparent 58%),
+    radial-gradient(ellipse 28% 10% at 80% 20%, var(--rose) 50%, transparent 52%),
+    radial-gradient(ellipse 28% 10% at 80% 80%, var(--rose) 50%, transparent 52%),
+    radial-gradient(ellipse 28% 10% at 20% 80%, var(--rose) 50%, transparent 52%),
+    radial-gradient(ellipse 28% 10% at 20% 20%, var(--rose) 50%, transparent 52%);
+}
+
+/* =========================================
+   PHASE 3: READING MODE
+   ========================================= */
+
+.reading-container {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--ivory);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+  z-index: 10;
+}
+
+.reading-container.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.book-reader {
+  position: relative;
+  width: 100%;
+  max-width: 375px;
+  height: 100vh;
+  height: 100dvh;
+  perspective: 1200px;
+  overflow: hidden;
+}
+
+.book-page {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: var(--ivory);
+  background-image: radial-gradient(
+      ellipse at 15% 50%,
+      rgba(247, 238, 220, 0.3),
+      transparent 50%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 27px,
+      rgba(180, 160, 130, 0.04) 27px,
+      rgba(180, 160, 130, 0.04) 28px
+    );
+  border-radius: 4px 10px 10px 4px;
+  padding: 32px 28px;
+  padding-top: calc(32px + var(--safe-top));
+  padding-bottom: calc(32px + var(--safe-bottom));
+  box-shadow: var(--shadow-paper);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-origin: left center;
+  transition: transform 0.7s cubic-bezier(0.645, 0.045, 0.355, 1);
+  overflow: hidden;
+}
+
+.book-page::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.05), transparent);
+  border-radius: 4px 0 0 4px;
+  pointer-events: none;
+}
+
+.book-page.flipped {
+  transform: rotateY(-180deg);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.book-page.jumping {
+  transition: none !important;
+}
+
+/* =========================================
+   PAGE NAVIGATION
+   ========================================= */
+
+.page-nav-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  z-index: 50;
+  cursor: pointer;
+}
+
+.page-nav-left {
+  left: 0;
+}
+
+.page-nav-right {
+  right: 0;
+}
+
+.progress-bar {
+  position: fixed;
+  bottom: calc(20px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  z-index: 60;
+}
+
+/* =========================================
+   TABLE OF CONTENTS
+   ========================================= */
+
+.toc-bookmark-btn {
+  position: absolute;
+  top: -4px;
+  right: 20px;
+  z-index: 70;
+  width: 28px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  background: var(--sunflower);
+  border: none;
+  padding: 0;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%);
+  transition: background 0.2s ease;
+  cursor: pointer;
+}
+
+.toc-bookmark-btn:hover,
+.toc-bookmark-btn:focus-visible {
+  background: var(--rose);
+}
+
+.toc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(61, 43, 31, 0.3);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toc-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.toc-card {
+  width: min(300px, calc(100% - 40px));
+  background: var(--ivory);
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(61, 43, 31, 0.25);
+  padding: 28px 24px 20px;
+  position: relative;
+  transform: translateY(10px);
+  transition: transform 0.3s ease;
+}
+
+.toc-overlay.open .toc-card {
+  transform: translateY(0);
+}
+
+.toc-card h2 {
+  font-family: "Noto Serif TC", Georgia, serif;
+  font-size: 18px;
+  text-align: center;
+  margin-bottom: 20px;
+  color: var(--ink);
+}
+
+.toc-chapter-list {
+  list-style: none;
+}
+
+.toc-chapter-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  min-height: 44px;
+  border-radius: 6px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  transition: background 0.15s ease;
   font-size: 13px;
-  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.3px;
+}
+
+.toc-chapter-item:last-child {
+  border-bottom: none;
+}
+
+.toc-chapter-item:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.toc-chapter-item[aria-current="true"] {
+  color: var(--ink);
+  font-weight: 500;
+  border-left: 3px solid var(--sunflower);
+  background: rgba(244, 190, 58, 0.08);
+}
+
+.toc-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 24px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.toc-close-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* =========================================
+   TYPOGRAPHY
+   ========================================= */
+
+body {
+  font-family: Pretendard, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 h1,
 h2,
 h3 {
-  margin: 0;
-  color: var(--ink);
-  font-family: "Noto Serif TC", "Nanum Myeongjo", Georgia, serif;
+  font-family: "Noto Serif TC", Georgia, serif;
   line-height: 1.2;
+  color: var(--ink);
+  margin: 0;
 }
 
 h1 {
@@ -182,19 +640,27 @@ p {
   line-height: 1.75;
 }
 
-.lead {
-  font-size: 16px;
+/* =========================================
+   PAGE CONTENT TYPES
+   ========================================= */
+
+.page-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
-.stats-grid {
+.page-intro .stats-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-top: 24px;
+  width: 100%;
 }
 
-.stats-grid article,
-.timeline-list li {
+.page-intro .stat-card {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 18px;
@@ -202,42 +668,222 @@ p {
   box-shadow: 0 14px 34px rgba(61, 43, 31, 0.1);
 }
 
-.stats-grid strong {
+.page-intro .stat-number {
   display: block;
   color: var(--sunflower);
-  font-family: "Noto Serif TC", serif;
+  font-family: "Noto Serif TC", Georgia, serif;
   font-size: 38px;
   line-height: 1;
 }
 
-.stats-grid span {
+.page-intro .stat-label {
   display: block;
   margin-top: 10px;
   color: var(--muted);
   font-size: 13px;
 }
 
-.timeline-list {
-  display: grid;
-  gap: 14px;
-  margin: 24px 0 0;
-  padding: 0;
-  list-style: none;
+.page-timeline {
+  padding-top: 36px;
 }
 
-.timeline-list time {
-  display: inline-block;
-  margin-bottom: 10px;
-  color: var(--rose);
-  font-size: 13px;
-  font-weight: 700;
+.page-timeline h3 {
+  font-size: 17px;
+  font-weight: 400;
+  margin-bottom: 24px;
+  line-height: 1.5;
 }
+
+.timeline-entry {
+  position: relative;
+  padding-left: 18px;
+  margin-bottom: 20px;
+  border-left: 1.5px solid var(--sunflower);
+}
+
+.timeline-entry::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sunflower);
+}
+
+.timeline-date {
+  font-size: 11px;
+  color: var(--rose);
+  letter-spacing: 0.5px;
+  margin-bottom: 3px;
+}
+
+.timeline-event {
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+.page-memory {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 36px;
+}
+
+.memory-photo {
+  width: 200px;
+  height: 150px;
+  background: linear-gradient(135deg, #e8dcc8, #d8c8a8);
+  border-radius: 4px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.memory-caption {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.8;
+  text-align: center;
+  font-style: italic;
+}
+
+.page-map {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.page-wishes {
+  padding-top: 36px;
+}
+
+.wishes-list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin-top: 20px;
+}
+
+.wish-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--ivory);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.page-letter {
+  padding-top: 36px;
+  line-height: 2.0;
+}
+
+.page-letter .letter-greeting {
+  font-family: "Noto Serif TC", Georgia, serif;
+  font-size: 15px;
+  margin-bottom: 20px;
+  color: var(--ink);
+}
+
+.page-letter .letter-body {
+  font-family: "Noto Serif TC", Georgia, serif;
+  font-size: 14px;
+  line-height: 2.0;
+  color: var(--ink);
+}
+
+.page-letter .letter-body p {
+  margin-bottom: 16px;
+  text-indent: 1em;
+}
+
+.page-ending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.sunflower-bloom {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 24px;
+}
+
+.sunflower-bloom::before {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, #2a1d10 40%, var(--ink));
+  z-index: 2;
+}
+
+.sunflower-bloom::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  z-index: 1;
+  background: radial-gradient(ellipse 36% 13% at 50% 3%, var(--sunflower) 60%, transparent 62%),
+    radial-gradient(ellipse 13% 36% at 97% 50%, var(--sunflower) 60%, transparent 62%),
+    radial-gradient(ellipse 36% 13% at 50% 97%, var(--sunflower) 60%, transparent 62%),
+    radial-gradient(ellipse 13% 36% at 3% 50%, var(--sunflower) 60%, transparent 62%),
+    radial-gradient(ellipse 30% 11% at 82% 18%, var(--sunflower) 56%, transparent 58%),
+    radial-gradient(ellipse 30% 11% at 82% 82%, var(--sunflower) 56%, transparent 58%),
+    radial-gradient(ellipse 30% 11% at 18% 82%, var(--sunflower) 56%, transparent 58%),
+    radial-gradient(ellipse 30% 11% at 18% 18%, var(--sunflower) 56%, transparent 58%);
+}
+
+.ending-message {
+  font-family: "Noto Serif TC", Georgia, serif;
+  font-size: 16px;
+  line-height: 2;
+  letter-spacing: 0.5px;
+  color: var(--ink);
+}
+
+.ending-restart-btn {
+  margin-top: 24px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 11px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+.ending-restart-btn:hover {
+  background: var(--sunflower);
+  color: var(--ink);
+  border-color: var(--sunflower);
+}
+
+/* =========================================
+   REDUCED MOTION
+   ========================================= */
 
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    transition-duration: 1ms !important;
-    animation-duration: 1ms !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
