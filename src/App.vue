@@ -13,6 +13,30 @@ const phase = ref<'gift' | 'book' | 'reading'>('gift')
 
 const engine = useBookEngine()
 
+// Background music
+const bgMusic = ref<HTMLAudioElement | null>(null)
+const isMuted = ref(false)
+
+function startMusicOnce() {
+  if (bgMusic.value) return
+  const audio = new Audio(import.meta.env.BASE_URL + 'background-music.mp3')
+  audio.loop = true
+  audio.volume = 0.3
+  bgMusic.value = audio
+  audio.play().catch(() => {
+    bgMusic.value = null
+  })
+}
+
+function toggleMute() {
+  if (!bgMusic.value) {
+    startMusicOnce()
+    return
+  }
+  isMuted.value = !isMuted.value
+  bgMusic.value.muted = isMuted.value
+}
+
 const languageOptions: Array<{ value: Locale; label: string }> = [
   { value: 'zh-TW', label: '繁中' },
   { value: 'ko', label: '한국어' },
@@ -232,15 +256,25 @@ function isFirstInSection(index: number): boolean {
     tabindex="0"
     @keydown="onKeydown"
     @click="localeMenuOpen = false"
+    @click.capture="startMusicOnce"
   >
-    <!-- Locale FAB (bottom-right) -->
+    <!-- Bottom-right FAB stack -->
     <div
-      class="locale-fab-container"
+      class="fab-stack"
       @click.stop
     >
       <button
         type="button"
-        class="locale-fab"
+        class="fab-btn music-fab"
+        :class="{ 'is-muted': isMuted }"
+        :aria-label="isMuted ? 'Unmute' : 'Mute'"
+        @click="toggleMute"
+      >
+        ♪
+      </button>
+      <button
+        type="button"
+        class="fab-btn locale-fab"
         aria-label="Language"
         @click="toggleLocaleMenu"
       >
