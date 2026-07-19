@@ -4,7 +4,7 @@
 
 :root {
   /* Color palette */
-  color-scheme: light;
+  color-scheme: light only;
   --paper: #f7eedc;
   --ivory: #fff9ed;
   --ink: #3d2b1f;
