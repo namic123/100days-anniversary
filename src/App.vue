@@ -5,11 +5,11 @@ import { anniversary } from '@/content/anniversary'
 import { timeline } from '@/content/timeline'
 import { getLocalizedText, type Locale } from '@/content/localization'
 
-const locale = ref<Locale>('zhTW')
+const locale = ref<Locale>('zh-TW')
 const opened = ref(false)
 
 const languageOptions: Array<{ value: Locale; label: string }> = [
-  { value: 'zhTW', label: '繁中' },
+  { value: 'zh-TW', label: '繁中' },
   { value: 'ko', label: '한국어' },
   { value: 'en', label: 'EN' },
 ]
@@ -17,7 +17,7 @@ const languageOptions: Array<{ value: Locale; label: string }> = [
 const heroTitle = computed(() =>
   getLocalizedText(
     {
-      zhTW: '寫給苙綺的100天紀錄',
+      'zh-TW': '寫給苙綺的100天紀錄',
       ko: '苙綺에게 보내는 100일의 기록',
       en: 'A 100-day record for 苙綺',
     },
@@ -71,7 +71,7 @@ const heroTitle = computed(() =>
         {{
           getLocalizedText(
             {
-              zhTW: '這是正式製作前的最小佔位版本，用來確認部署、語言與版面基礎。',
+              'zh-TW': '這是正式製作前的最小佔位版本，用來確認部署、語言與版面基礎。',
               ko: '정식 제작 전 배포, 언어, 레이아웃 기반을 확인하기 위한 최소 placeholder 버전입니다.',
               en: 'This is a minimal placeholder used to verify deployment, language, and layout foundations.',
             },
@@ -92,7 +92,7 @@ const heroTitle = computed(() =>
         {{
           getLocalizedText(
             {
-              zhTW: '我們的第一個100天',
+              'zh-TW': '我們的第一個100天',
               ko: '우리의 첫 100일',
               en: 'Our first 100 days',
             },
@@ -106,11 +106,11 @@ const heroTitle = computed(() =>
       >
         <article>
           <strong>100</strong>
-          <span>{{ getLocalizedText({ zhTW: '一起走過的日子', ko: '함께한 날', en: 'days together' }, locale) }}</span>
+          <span>{{ getLocalizedText({ 'zh-TW': '一起走過的日子', ko: '함께한 날', en: 'days together' }, locale) }}</span>
         </article>
         <article>
           <strong>3</strong>
-          <span>{{ getLocalizedText({ zhTW: '支援語言', ko: '지원 언어', en: 'languages' }, locale) }}</span>
+          <span>{{ getLocalizedText({ 'zh-TW': '支援語言', ko: '지원 언어', en: 'languages' }, locale) }}</span>
         </article>
       </div>
     </section>
@@ -126,7 +126,7 @@ const heroTitle = computed(() =>
         {{
           getLocalizedText(
             {
-              zhTW: '故事開始的方式',
+              'zh-TW': '故事開始的方式',
               ko: '우리 이야기가 시작된 방식',
               en: 'How our story began',
             },

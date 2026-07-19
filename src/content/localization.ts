@@ -1,11 +1,11 @@
-export type Locale = 'zhTW' | 'ko' | 'en'
+export type Locale = 'zh-TW' | 'ko' | 'en'
 
 export type LocalizedText = {
+  'zh-TW': string
   ko: string
-  zhTW: string
   en: string
 }
 
 export function getLocalizedText(text: LocalizedText, locale: Locale): string {
-  return text[locale] || text.zhTW
+  return text[locale] || text['zh-TW']
 }

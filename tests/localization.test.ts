@@ -7,12 +7,25 @@ describe('getLocalizedText', () => {
     expect(
       getLocalizedText(
         {
-          zhTW: '繁體中文',
+          'zh-TW': '繁體中文',
           ko: '한국어',
           en: 'English',
         },
         'ko',
       ),
     ).toBe('한국어')
+  })
+
+  it('falls back to zh-TW for unknown locale', () => {
+    expect(
+      getLocalizedText(
+        {
+          'zh-TW': '繁體中文',
+          ko: '한국어',
+          en: 'English',
+        },
+        'zh-TW',
+      ),
+    ).toBe('繁體中文')
   })
 })
