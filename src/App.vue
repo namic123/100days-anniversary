@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref, computed, nextTick } from 'vue'
+import { type Locale } from '@/content/localization'
+import { getLocalizedText } from '@/content/localization'
+import { useBookEngine } from '@/composables/useBookEngine'
 
-import { anniversary } from '@/content/anniversary'
-import { timeline } from '@/content/timeline'
-import { getLocalizedText, type Locale } from '@/content/localization'
+import GiftBox from '@/components/GiftBox.vue'
+import BookCover from '@/components/BookCover.vue'
+import BookPageRenderer from '@/components/BookPageRenderer.vue'
 
 const locale = ref<Locale>('zh-TW')
-const opened = ref(false)
+const phase = ref<'gift' | 'book' | 'reading'>('gift')
+
+const engine = useBookEngine()
 
 const languageOptions: Array<{ value: Locale; label: string }> = [
   { value: 'zh-TW', label: '繁中' },
@@ -14,136 +19,318 @@ const languageOptions: Array<{ value: Locale; label: string }> = [
   { value: 'en', label: 'EN' },
 ]
 
-const heroTitle = computed(() =>
-  getLocalizedText(
-    {
-      'zh-TW': '寫給苙綺的100天紀錄',
-      ko: '苙綺에게 보내는 100일의 기록',
-      en: 'A 100-day record for 苙綺',
-    },
-    locale.value,
-  ),
-)
+// TOC state
+const tocOpen = ref(false)
+const isJumping = ref(false)
+const tocBtnRef = ref<HTMLButtonElement>()
+const readerRef = ref<HTMLDivElement>()
+const pageRefs = ref<HTMLDivElement[]>([])
+
+const tocHeading = {
+  'zh-TW': '目錄',
+  ko: '목차',
+  en: 'Contents',
+}
+
+function onGiftOpened() {
+  phase.value = 'book'
+}
+
+function onBookOpened() {
+  phase.value = 'reading'
+}
+
+function restart() {
+  engine.resetBook()
+  phase.value = 'gift'
+  // Preserve locale - do NOT reset
+}
+
+// Progress display with chapter awareness
+const progressText = computed(() => {
+  const chapterLabel = getLocalizedText(engine.currentChapter.value.label, locale.value)
+  const currentPage = engine.currentIndex.value + 1
+  const total = engine.totalPages.value
+  return `${chapterLabel} · ${currentPage} / ${total}`
+})
+
+// Navigation lock
+const isNavigationLocked = computed(() => {
+  return tocOpen.value || isJumping.value || engine.isFlipping.value
+})
+
+// Swipe handling for reading mode
+let touchStartX = 0
+function onTouchStart(e: TouchEvent) {
+  if (isNavigationLocked.value) return
+  touchStartX = e.touches[0].clientX
+}
+
+function onTouchEnd(e: TouchEvent) {
+  if (isNavigationLocked.value) return
+  const diff = touchStartX - e.changedTouches[0].clientX
+  if (Math.abs(diff) > 50) {
+    if (diff > 0) flipForward()
+    else flipBack()
+  }
+}
+
+// Tap zone handling
+function onTapLeft() {
+  if (isNavigationLocked.value) return
+  flipBack()
+}
+
+function onTapRight() {
+  if (isNavigationLocked.value) return
+  flipForward()
+}
+
+// Keyboard nav
+function onKeydown(e: KeyboardEvent) {
+  if (phase.value !== 'reading') return
+
+  // ESC key closes TOC
+  if (e.key === 'Escape' && tocOpen.value) {
+    closeToc()
+    return
+  }
+
+  if (isNavigationLocked.value) return
+
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') flipForward()
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') flipBack()
+}
+
+// Page flip with transition management and timeout
+async function flipForward() {
+  if (!engine.canGoForward.value || isNavigationLocked.value) return
+
+  engine.isFlipping.value = true
+  engine.flipForward()
+
+  await waitForTransitionOrTimeout()
+  engine.isFlipping.value = false
+}
+
+async function flipBack() {
+  if (!engine.canGoBack.value || isNavigationLocked.value) return
+
+  engine.isFlipping.value = true
+  engine.flipBack()
+
+  await waitForTransitionOrTimeout()
+  engine.isFlipping.value = false
+}
+
+async function waitForTransitionOrTimeout() {
+  return new Promise<void>((resolve) => {
+    const timeout = setTimeout(() => {
+      resolve()
+    }, 900)
+
+    const currentPageIndex = engine.currentIndex.value
+    const pageElement = pageRefs.value[currentPageIndex]
+
+    if (pageElement) {
+      const onTransitionEnd = () => {
+        clearTimeout(timeout)
+        pageElement.removeEventListener('transitionend', onTransitionEnd)
+        resolve()
+      }
+      pageElement.addEventListener('transitionend', onTransitionEnd)
+    } else {
+      // If no page element, just wait for timeout
+      setTimeout(() => resolve(), 600)
+    }
+  })
+}
+
+// TOC functions
+function toggleToc() {
+  if (tocOpen.value) {
+    closeToc()
+  } else {
+    tocOpen.value = true
+  }
+}
+
+function closeToc() {
+  tocOpen.value = false
+  // Restore focus to bookmark button
+  nextTick(() => {
+    tocBtnRef.value?.focus()
+  })
+}
+
+async function jumpToChapter(chapterId: string) {
+  if (isJumping.value) return
+
+  isJumping.value = true
+  tocOpen.value = false
+
+  // Add .jumping class to all pages (disables CSS transitions)
+  for (const pageEl of pageRefs.value) {
+    pageEl?.classList.add('jumping')
+  }
+
+  // Fade out reader
+  if (readerRef.value) {
+    readerRef.value.style.opacity = '0'
+  }
+
+  // Wait for fade out
+  await new Promise(resolve => setTimeout(resolve, 250))
+
+  // Jump to chapter
+  engine.jumpToChapter(chapterId)
+
+  // Wait for state to settle
+  await nextTick()
+
+  // Remove .jumping class
+  for (const pageEl of pageRefs.value) {
+    pageEl?.classList.remove('jumping')
+  }
+
+  // Fade in reader
+  if (readerRef.value) {
+    readerRef.value.style.opacity = '1'
+  }
+
+  // Wait for fade in to complete
+  await new Promise(resolve => setTimeout(resolve, 250))
+
+  isJumping.value = false
+}
+
+// Determine if a page is first in its section
+function isFirstInSection(index: number): boolean {
+  if (index === 0) return true
+  return engine.pages.value[index].section !== engine.pages.value[index - 1].section
+}
 </script>
 
 <template>
-  <main class="site-shell">
-    <section
-      class="hero-section"
-      aria-labelledby="hero-title"
+  <div
+    class="app-shell"
+    tabindex="0"
+    @keydown="onKeydown"
+  >
+    <!-- Language Switcher (always visible) -->
+    <div
+      class="language-switcher"
+      aria-label="Language"
+      @click.stop
     >
-      <div
-        class="language-switcher"
-        aria-label="Language"
-      >
-        <button
-          v-for="option in languageOptions"
-          :key="option.value"
-          type="button"
-          :aria-pressed="locale === option.value"
-          @click="locale = option.value"
-        >
-          {{ option.label }}
-        </button>
-      </div>
-
       <button
-        class="envelope"
+        v-for="option in languageOptions"
+        :key="option.value"
         type="button"
-        :class="{ 'is-open': opened }"
-        aria-label="Open anniversary letter"
-        @click="opened = !opened"
+        :aria-pressed="locale === option.value"
+        @click.stop="locale = option.value"
       >
-        <span
-          class="letter-paper"
-          aria-hidden="true"
-        />
-        <span class="recipient">苙綺</span>
+        {{ option.label }}
+      </button>
+    </div>
+
+    <!-- Phase 1: Gift Box -->
+    <GiftBox
+      v-if="phase === 'gift'"
+      :locale="locale"
+      @opened="onGiftOpened"
+    />
+
+    <!-- Phase 2: Book Cover -->
+    <BookCover
+      v-if="phase === 'book'"
+      :locale="locale"
+      @opened="onBookOpened"
+    />
+
+    <!-- Phase 3: Reading Mode -->
+    <div
+      v-if="phase === 'reading'"
+      class="reading-container"
+      @touchstart.passive="onTouchStart"
+      @touchend.passive="onTouchEnd"
+    >
+      <!-- TOC bookmark button -->
+      <button
+        ref="tocBtnRef"
+        class="toc-bookmark-btn"
+        :aria-label="getLocalizedText(tocHeading, locale)"
+        @click="toggleToc"
+      >
+        ☰
       </button>
 
-      <p class="eyebrow">
-        100 Days Scrapbook
-      </p>
-      <h1 id="hero-title">
-        {{ heroTitle }}
-      </h1>
-      <p class="lead">
-        {{
-          getLocalizedText(
-            {
-              'zh-TW': '這是正式製作前的最小佔位版本，用來確認部署、語言與版面基礎。',
-              ko: '정식 제작 전 배포, 언어, 레이아웃 기반을 확인하기 위한 최소 placeholder 버전입니다.',
-              en: 'This is a minimal placeholder used to verify deployment, language, and layout foundations.',
-            },
-            locale,
-          )
-        }}
-      </p>
-    </section>
-
-    <section
-      class="paper-section"
-      aria-labelledby="stats-title"
-    >
-      <p class="eyebrow">
-        {{ anniversary.startDate }} - {{ anniversary.hundredthDay }}
-      </p>
-      <h2 id="stats-title">
-        {{
-          getLocalizedText(
-            {
-              'zh-TW': '我們的第一個100天',
-              ko: '우리의 첫 100일',
-              en: 'Our first 100 days',
-            },
-            locale,
-          )
-        }}
-      </h2>
       <div
-        class="stats-grid"
-        aria-label="Anniversary facts"
+        ref="readerRef"
+        class="book-reader"
+        style="transition: opacity 0.25s ease"
       >
-        <article>
-          <strong>100</strong>
-          <span>{{ getLocalizedText({ 'zh-TW': '一起走過的日子', ko: '함께한 날', en: 'days together' }, locale) }}</span>
-        </article>
-        <article>
-          <strong>3</strong>
-          <span>{{ getLocalizedText({ 'zh-TW': '支援語言', ko: '지원 언어', en: 'languages' }, locale) }}</span>
-        </article>
-      </div>
-    </section>
-
-    <section
-      class="paper-section"
-      aria-labelledby="timeline-title"
-    >
-      <p class="eyebrow">
-        Timeline
-      </p>
-      <h2 id="timeline-title">
-        {{
-          getLocalizedText(
-            {
-              'zh-TW': '故事開始的方式',
-              ko: '우리 이야기가 시작된 방식',
-              en: 'How our story began',
-            },
-            locale,
-          )
-        }}
-      </h2>
-      <ol class="timeline-list">
-        <li
-          v-for="item in timeline"
-          :key="item.id"
+        <div
+          v-for="(page, index) in engine.pages.value"
+          :key="page.id"
+          ref="pageRefs"
+          class="book-page"
+          :class="{
+            flipped: index < engine.currentIndex.value,
+          }"
+          :style="{ zIndex: engine.pages.value.length - index }"
         >
-          <time :datetime="item.date">{{ item.date }}</time>
-          <h3>{{ getLocalizedText(item.title, locale) }}</h3>
-          <p>{{ getLocalizedText(item.description, locale) }}</p>
-        </li>
-      </ol>
-    </section>
-  </main>
+          <BookPageRenderer
+            :page="page"
+            :locale="locale"
+            :is-first-in-section="isFirstInSection(index)"
+            @restart="restart"
+          />
+        </div>
+
+        <!-- Tap zones -->
+        <div
+          class="page-nav-zone page-nav-left"
+          @click.stop="onTapLeft"
+        />
+        <div
+          class="page-nav-zone page-nav-right"
+          @click.stop="onTapRight"
+        />
+      </div>
+
+      <!-- Progress -->
+      <div class="progress-bar">
+        {{ progressText }}
+      </div>
+
+      <!-- TOC Overlay -->
+      <div
+        v-if="tocOpen"
+        class="toc-overlay"
+        @click.self="closeToc"
+      >
+        <div class="toc-card">
+          <button
+            class="toc-close-btn"
+            @click="closeToc"
+          >
+            ×
+          </button>
+          <h2>{{ getLocalizedText(tocHeading, locale) }}</h2>
+          <ul class="toc-chapter-list">
+            <li
+              v-for="ch in engine.chapters.value"
+              :key="ch.id"
+              class="toc-chapter-item"
+              :aria-current="ch.id === engine.currentChapter.value.id ? 'true' : undefined"
+              @click="jumpToChapter(ch.id)"
+            >
+              {{ getLocalizedText(ch.label, locale) }}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
