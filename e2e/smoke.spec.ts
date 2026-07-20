@@ -67,14 +67,14 @@ test('full flow: gift box → book → reading → language switch', async ({ pa
 
   await page.goto(baseUrl)
 
-  // Phase 1: Gift box visible with zh-TW name tag
+  // Phase 1: Gift box visible with zh-TW message and name tag
   await expect(page.getByText('給苙綺')).toBeVisible()
 
   // Open gift box
-  await page.getByRole('button', { name: '輕觸打開' }).click()
+  await page.getByRole('button', { name: '輕輕點一下禮物盒' }).click()
 
-  // Wait for gift box animation (1000ms from GiftBox.vue)
-  await page.waitForTimeout(1500)
+  // Wait for gift box + unboxing animation
+  await page.waitForTimeout(2500)
 
   // Phase 2: Book cover appears
   await expect(page.getByText('我們的100天日記')).toBeVisible({ timeout: 3000 })

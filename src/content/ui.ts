@@ -16,10 +16,15 @@ export const uiText: Record<string, LocalizedText> = {
     ko: '처음부터 다시 보기',
     en: 'Read Again',
   },
+  giftMessage: {
+    'zh-TW': '苙綺，我為妳準備了一份小小的禮物。',
+    ko: '苙綺, 너를 위해 준비한 작은 선물이 있어.',
+    en: 'Lichi, I prepared a little gift for you.',
+  },
   tapToOpen: {
-    'zh-TW': '輕觸打開',
-    ko: '탭하여 열어보세요',
-    en: 'Tap to open',
+    'zh-TW': '輕輕點一下禮物盒',
+    ko: '상자를 살짝 눌러봐',
+    en: 'Tap the gift to open',
   },
   swipeHint: {
     'zh-TW': '左右滑動或輕觸翻頁',
