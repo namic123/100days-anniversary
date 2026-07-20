@@ -473,7 +473,8 @@ button:focus-visible {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   transform-origin: left center;
-  transition: transform 0.7s cubic-bezier(0.645, 0.045, 0.355, 1);
+  transition: transform 0.7s cubic-bezier(0.645, 0.045, 0.355, 1),
+    visibility 0s linear 0s;
   overflow: hidden;
 }
 
@@ -493,6 +494,8 @@ button:focus-visible {
   transform: rotateY(-180deg);
   visibility: hidden;
   pointer-events: none;
+  transition: transform 0.7s cubic-bezier(0.645, 0.045, 0.355, 1),
+    visibility 0s linear 0.7s;
 }
 
 .book-page.jumping {
