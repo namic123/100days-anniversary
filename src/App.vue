@@ -13,28 +13,35 @@ const phase = ref<'gift' | 'book' | 'reading'>('gift')
 
 const engine = useBookEngine()
 
-// Background music
-const bgMusic = ref<HTMLAudioElement | null>(null)
+// Background music — preload once, play on first user gesture
+const bgMusic = new Audio(import.meta.env.BASE_URL + 'background-music.mp3')
+bgMusic.loop = true
+bgMusic.volume = 0.3
+bgMusic.preload = 'auto'
+
 const isMuted = ref(false)
+const musicPlaying = ref(false)
+let musicStarting = false
 
 function startMusicOnce() {
-  if (bgMusic.value) return
-  const audio = new Audio(import.meta.env.BASE_URL + 'background-music.mp3')
-  audio.loop = true
-  audio.volume = 0.3
-  bgMusic.value = audio
-  audio.play().catch(() => {
-    bgMusic.value = null
+  if (musicPlaying.value || musicStarting) return
+  musicStarting = true
+  bgMusic.play().then(() => {
+    musicPlaying.value = true
+  }).catch(() => {
+    // Will retry on next user gesture
+  }).finally(() => {
+    musicStarting = false
   })
 }
 
 function toggleMute() {
-  if (!bgMusic.value) {
+  if (!musicPlaying.value) {
     startMusicOnce()
     return
   }
   isMuted.value = !isMuted.value
-  bgMusic.value.muted = isMuted.value
+  bgMusic.muted = isMuted.value
 }
 
 const languageOptions: Array<{ value: Locale; label: string }> = [
@@ -82,7 +89,6 @@ function onBookOpened() {
 function restart() {
   engine.resetBook()
   phase.value = 'gift'
-  // Preserve locale - do NOT reset
 }
 
 // Progress display with chapter awareness
@@ -92,6 +98,21 @@ const progressText = computed(() => {
   const total = engine.totalPages.value
   return `${chapterLabel} · ${currentPage} / ${total}`
 })
+
+// Page virtualization — render only nearby pages to reduce GPU layers
+const VISIBLE_RANGE = 2
+
+const visiblePages = computed(() => {
+  const current = engine.currentIndex.value
+  const all = engine.pages.value
+  const start = Math.max(0, current - VISIBLE_RANGE)
+  const end = Math.min(all.length - 1, current + VISIBLE_RANGE)
+  return all.slice(start, end + 1).map((page, i) => ({ page, index: start + i }))
+})
+
+function getPageElement(pageIndex: number): HTMLDivElement | undefined {
+  return pageRefs.value.find(el => el?.dataset.pageIndex === String(pageIndex))
+}
 
 // Navigation lock
 const isNavigationLocked = computed(() => {
@@ -129,7 +150,6 @@ function onTapRight() {
 function onKeydown(e: KeyboardEvent) {
   if (phase.value !== 'reading') return
 
-  // ESC key closes TOC
   if (e.key === 'Escape' && tocOpen.value) {
     closeToc()
     return
@@ -141,14 +161,15 @@ function onKeydown(e: KeyboardEvent) {
   if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') flipBack()
 }
 
-// Page flip with transition management and timeout
+// Page flip — listen on the correct (transitioning) page element
 async function flipForward() {
   if (!engine.canGoForward.value || isNavigationLocked.value) return
 
+  const flippingIndex = engine.currentIndex.value
   engine.isFlipping.value = true
   engine.flipForward()
 
-  await waitForTransitionOrTimeout()
+  await waitForTransitionOrTimeout(flippingIndex)
   engine.isFlipping.value = false
 }
 
@@ -157,30 +178,25 @@ async function flipBack() {
 
   engine.isFlipping.value = true
   engine.flipBack()
+  const revealedIndex = engine.currentIndex.value
 
-  await waitForTransitionOrTimeout()
+  await waitForTransitionOrTimeout(revealedIndex)
   engine.isFlipping.value = false
 }
 
-async function waitForTransitionOrTimeout() {
+async function waitForTransitionOrTimeout(pageIndex: number) {
   return new Promise<void>((resolve) => {
-    const timeout = setTimeout(() => {
-      resolve()
-    }, 900)
-
-    const currentPageIndex = engine.currentIndex.value
-    const pageElement = pageRefs.value[currentPageIndex]
+    const timeout = setTimeout(resolve, 900)
+    const pageElement = getPageElement(pageIndex)
 
     if (pageElement) {
-      const onTransitionEnd = () => {
+      const onEnd = (e: TransitionEvent) => {
+        if (e.target !== pageElement) return
         clearTimeout(timeout)
-        pageElement.removeEventListener('transitionend', onTransitionEnd)
+        pageElement.removeEventListener('transitionend', onEnd)
         resolve()
       }
-      pageElement.addEventListener('transitionend', onTransitionEnd)
-    } else {
-      // If no page element, just wait for timeout
-      setTimeout(() => resolve(), 600)
+      pageElement.addEventListener('transitionend', onEnd)
     }
   })
 }
@@ -196,7 +212,6 @@ function toggleToc() {
 
 function closeToc() {
   tocOpen.value = false
-  // Restore focus to bookmark button
   nextTick(() => {
     tocBtnRef.value?.focus()
   })
@@ -208,36 +223,19 @@ async function jumpToChapter(chapterId: string) {
   isJumping.value = true
   tocOpen.value = false
 
-  // Add .jumping class to all pages (disables CSS transitions)
-  for (const pageEl of pageRefs.value) {
-    pageEl?.classList.add('jumping')
-  }
-
-  // Fade out reader
   if (readerRef.value) {
     readerRef.value.style.opacity = '0'
   }
 
-  // Wait for fade out
   await new Promise(resolve => setTimeout(resolve, 250))
 
-  // Jump to chapter
   engine.jumpToChapter(chapterId)
-
-  // Wait for state to settle
   await nextTick()
 
-  // Remove .jumping class
-  for (const pageEl of pageRefs.value) {
-    pageEl?.classList.remove('jumping')
-  }
-
-  // Fade in reader
   if (readerRef.value) {
     readerRef.value.style.opacity = '1'
   }
 
-  // Wait for fade in to complete
   await new Promise(resolve => setTimeout(resolve, 250))
 
   isJumping.value = false
@@ -256,7 +254,6 @@ function isFirstInSection(index: number): boolean {
     tabindex="0"
     @keydown="onKeydown"
     @click="localeMenuOpen = false"
-    @click.capture="startMusicOnce"
   >
     <!-- Bottom-right FAB stack -->
     <div
@@ -302,6 +299,7 @@ function isFirstInSection(index: number): boolean {
       v-if="phase === 'gift'"
       :locale="locale"
       @opened="onGiftOpened"
+      @click="startMusicOnce"
     />
 
     <!-- Phase 2: Book Cover -->
@@ -309,6 +307,7 @@ function isFirstInSection(index: number): boolean {
       v-if="phase === 'book'"
       :locale="locale"
       @opened="onBookOpened"
+      @click="startMusicOnce"
     />
 
     <!-- Phase 3: Reading Mode -->
@@ -334,12 +333,14 @@ function isFirstInSection(index: number): boolean {
         style="transition: opacity 0.25s ease"
       >
         <div
-          v-for="(page, index) in engine.pages.value"
+          v-for="{ page, index } in visiblePages"
           :key="page.id"
           ref="pageRefs"
           class="book-page"
+          :data-page-index="index"
           :class="{
             flipped: index < engine.currentIndex.value,
+            jumping: isJumping,
           }"
           :style="{ zIndex: engine.pages.value.length - index }"
         >
