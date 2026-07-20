@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { getLocalizedText, type Locale } from '@/content/localization'
 import { uiText } from '@/content/ui'
 
-const props = defineProps<{ locale: Locale }>()
+const props = defineProps<{ locale: Locale; isUnboxing?: boolean }>()
 const emit = defineEmits<{ opened: [] }>()
 
 const isOpening = ref(false)
@@ -11,12 +11,16 @@ const isOpening = ref(false)
 function openBox() {
   if (isOpening.value) return
   isOpening.value = true
-  setTimeout(() => emit('opened'), 1800)
+  // Emit after lid has opened enough to reveal the book behind
+  setTimeout(() => emit('opened'), 800)
 }
 </script>
 
 <template>
-  <div class="gift-scene">
+  <div
+    class="gift-scene"
+    :class="{ 'is-unboxing': isUnboxing }"
+  >
     <div
       class="gift-box"
       role="button"

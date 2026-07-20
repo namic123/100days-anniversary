@@ -9,7 +9,7 @@ import BookCover from '@/components/BookCover.vue'
 import BookPageRenderer from '@/components/BookPageRenderer.vue'
 
 const locale = ref<Locale>('zh-TW')
-const phase = ref<'gift' | 'book' | 'opening' | 'reading'>('gift')
+const phase = ref<'gift' | 'unboxing' | 'book' | 'opening' | 'reading'>('gift')
 
 const engine = useBookEngine()
 
@@ -78,8 +78,23 @@ const tocHeading = {
   en: 'Contents',
 }
 
-function onGiftOpened() {
-  phase.value = 'book'
+async function onGiftOpened() {
+  // Show book behind the gift box during unboxing
+  phase.value = 'unboxing'
+  await nextTick()
+
+  // Trigger the book rise animation on next frame
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const book = document.querySelector('.book-container') as HTMLElement | null
+      if (book) book.classList.add('is-risen')
+    })
+  })
+
+  // After book has risen and gift faded, switch to book phase
+  setTimeout(() => {
+    phase.value = 'book'
+  }, 1400)
 }
 
 async function onBookOpened() {
@@ -309,18 +324,20 @@ function isFirstInSection(index: number): boolean {
       </div>
     </div>
 
-    <!-- Phase 1: Gift Box -->
+    <!-- Phase 1: Gift Box (stays visible during unboxing) -->
     <GiftBox
-      v-if="phase === 'gift'"
+      v-if="phase === 'gift' || phase === 'unboxing'"
       :locale="locale"
+      :is-unboxing="phase === 'unboxing'"
       @opened="onGiftOpened"
       @click="startMusicOnce"
     />
 
-    <!-- Phase 2: Book Cover (stays visible during opening transition) -->
+    <!-- Phase 2: Book Cover (appears during unboxing, stays during opening) -->
     <BookCover
-      v-if="phase === 'book' || phase === 'opening'"
+      v-if="phase === 'unboxing' || phase === 'book' || phase === 'opening'"
       :locale="locale"
+      :is-unboxing="phase === 'unboxing'"
       @opened="onBookOpened"
       @click="startMusicOnce"
     />

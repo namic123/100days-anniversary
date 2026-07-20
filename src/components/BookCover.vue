@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { getLocalizedText, type Locale } from '@/content/localization'
 import { uiText } from '@/content/ui'
 
-const props = defineProps<{ locale: Locale }>()
+const props = defineProps<{ locale: Locale; isUnboxing?: boolean }>()
 const emit = defineEmits<{ opened: [] }>()
 
 const isFlipping = ref(false)
@@ -17,7 +17,10 @@ function openBook() {
 </script>
 
 <template>
-  <div class="book-container">
+  <div
+    class="book-container"
+    :class="{ 'is-unboxing': props.isUnboxing }"
+  >
     <div
       class="book-cover"
       role="button"
