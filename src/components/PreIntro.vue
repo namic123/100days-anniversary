@@ -452,12 +452,30 @@ function bloomFlower() {
 function burstFlower() {
   const scene = A1.scene!
 
+  // Shared geometry per size and material per color — all burst particles
+  // fade in lockstep, so they can share GPU resources
+  const geoBySize = new Map<number, THREE.SphereGeometry>()
+  const matByColor = new Map<number, THREE.MeshBasicMaterial>()
+  const getGeo = (size: number) => {
+    let g = geoBySize.get(size)
+    if (!g) {
+      g = new THREE.SphereGeometry(size, 6, 6)
+      geoBySize.set(size, g)
+    }
+    return g
+  }
+  const getMat = (color: number) => {
+    let m = matByColor.get(color)
+    if (!m) {
+      m = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 1 })
+      matByColor.set(color, m)
+    }
+    return m
+  }
+
   const spawnBurst = (position: THREE.Vector3, color: number, count: number, size: number) => {
     for (let i = 0; i < count; i++) {
-      const p = new THREE.Mesh(
-        new THREE.SphereGeometry(size, 6, 6),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 1 }),
-      )
+      const p = new THREE.Mesh(getGeo(size), getMat(color))
       p.position.copy(position)
       p.position.x += (Math.random() - 0.5) * 0.2
       p.position.z += (Math.random() - 0.5) * 0.2
@@ -502,10 +520,11 @@ function burstFlower() {
   function updateBurst() {
     if (disposed) return
     const progress = Math.min((Date.now() - startTime) / 1200, 1)
+    const opacity = 1 - easeOutCubic(progress)
+    matByColor.forEach((m) => { m.opacity = opacity })
     A1.burstParticles.forEach((p) => {
       p.position.add(p.userData.vel as THREE.Vector3)
       ;(p.userData.vel as THREE.Vector3).multiplyScalar(0.97)
-      ;(p.material as THREE.MeshBasicMaterial).opacity = 1 - easeOutCubic(progress)
     })
     if (progress < 1) requestAnimationFrame(updateBurst)
     else transitionToAct2()
@@ -618,15 +637,34 @@ class Particle2D {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size)
-    gradient.addColorStop(0, hexToRGBA(this.color, this.opacity))
-    gradient.addColorStop(0.5, hexToRGBA(this.color, this.opacity * 0.4))
-    gradient.addColorStop(1, hexToRGBA(this.color, 0))
-    ctx.fillStyle = gradient
-    ctx.beginPath()
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
-    ctx.fill()
+    // Pre-rendered glow sprite instead of a per-frame radial gradient
+    ctx.globalAlpha = this.opacity
+    const d = this.size * 2
+    ctx.drawImage(getGlowSprite(this.color), this.x - this.size, this.y - this.size, d, d)
   }
+}
+
+// One cached glow sprite per color — drawing 750 gradients per frame is the
+// single most expensive part of the particle render loop
+const spriteCache = new Map<string, HTMLCanvasElement>()
+
+function getGlowSprite(color: string): HTMLCanvasElement {
+  let sprite = spriteCache.get(color)
+  if (!sprite) {
+    const R = 16
+    sprite = document.createElement('canvas')
+    sprite.width = R * 2
+    sprite.height = R * 2
+    const c = sprite.getContext('2d')!
+    const gradient = c.createRadialGradient(R, R, 0, R, R, R)
+    gradient.addColorStop(0, hexToRGBA(color, 1))
+    gradient.addColorStop(0.5, hexToRGBA(color, 0.4))
+    gradient.addColorStop(1, hexToRGBA(color, 0))
+    c.fillStyle = gradient
+    c.fillRect(0, 0, R * 2, R * 2)
+    spriteCache.set(color, sprite)
+  }
+  return sprite
 }
 
 function hexToRGBA(hex: string, alpha: number) {
@@ -885,6 +923,7 @@ function renderLoopAct2() {
     p.update()
     p.draw(ctx)
   })
+  ctx.globalAlpha = 1
 
   requestAnimationFrame(renderLoopAct2)
 }

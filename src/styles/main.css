@@ -186,10 +186,24 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: var(--ivory);
+  background:
+    radial-gradient(ellipse 90% 60% at 20% 12%, rgba(248, 231, 190, 0.55), transparent 60%),
+    radial-gradient(ellipse 80% 55% at 88% 85%, rgba(236, 216, 178, 0.4), transparent 60%),
+    linear-gradient(172deg, #fffcf4 0%, var(--ivory) 45%, #f8eeda 100%);
   transition: opacity 0.8s ease, transform 0.8s ease;
   z-index: 10;
   overflow: hidden;
+}
+
+/* Subtle paper grain over the whole scene */
+.gift-scene::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: radial-gradient(rgba(61, 43, 31, 0.028) 1px, transparent 1px);
+  background-size: 4px 4px;
 }
 
 /* Entrance from pre-intro: fade in from the warm center glow */
@@ -439,16 +453,18 @@ button:focus-visible {
 /* ----- Message ----- */
 .gs-message {
   font-family: "Noto Serif TC", Georgia, serif;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 400;
   color: var(--ink);
   text-align: center;
-  line-height: 1.8;
-  letter-spacing: 0.5px;
+  line-height: 1.9;
+  letter-spacing: 0.8px;
   margin-top: 18vh;
+  padding: 0 32px;
   z-index: 5;
   opacity: 0;
   transform: translateY(8px);
+  text-shadow: 0 1px 0 rgba(255, 252, 244, 0.8);
   animation: gs-fade-up 1.2s ease-out 0.5s forwards;
 }
 
@@ -476,12 +492,26 @@ button:focus-visible {
   z-index: -1; transform: rotate(6deg);
 }
 .gs-envelope-body {
-  width: 100%; height: 100%; background: #f0e6d4; border-radius: 3px;
-  box-shadow: 0 2px 8px rgba(61, 43, 31, 0.08); position: relative; overflow: hidden;
+  width: 100%; height: 100%;
+  background: linear-gradient(170deg, #f6eddb, #eee2ca);
+  border-radius: 3px;
+  box-shadow: 0 3px 10px rgba(61, 43, 31, 0.1), inset 0 0 0 1px rgba(61, 43, 31, 0.04);
+  position: relative; overflow: hidden;
 }
 .gs-envelope-flap {
   position: absolute; top: 0; left: 0; right: 0; height: 34px;
-  background: #e8dcc8; clip-path: polygon(0 0, 50% 100%, 100% 0);
+  background: linear-gradient(180deg, #ecdfc5, #e2d3b6);
+  clip-path: polygon(0 0, 50% 100%, 100% 0);
+  box-shadow: 0 1px 2px rgba(61, 43, 31, 0.08);
+}
+/* Wax seal at the flap point */
+.gs-envelope-body::after {
+  content: "";
+  position: absolute; top: 27px; left: 50%;
+  width: 14px; height: 14px; transform: translateX(-50%);
+  border-radius: 50% 48% 52% 50%;
+  background: radial-gradient(circle at 35% 32%, #d99a97, var(--rose) 55%, #a96562);
+  box-shadow: 0 1px 3px rgba(61, 43, 31, 0.2), inset 0 -1px 2px rgba(90, 40, 38, 0.4);
 }
 .gs-envelope-text {
   position: absolute; bottom: 8px; left: 10px;
@@ -502,10 +532,17 @@ button:focus-visible {
   bottom: 0;
   width: 220px;
   height: 130px;
-  background: linear-gradient(145deg, #ead5ad, #c9b591 60%, #8b7355);
+  background:
+    repeating-linear-gradient(
+      93deg,
+      transparent 0 5px,
+      rgba(139, 115, 85, 0.05) 5px 6px
+    ),
+    linear-gradient(145deg, #f0debb 0%, #ddc79d 40%, #c0a87e 75%, #977c5b 100%);
   border-radius: 6px;
-  box-shadow: 0 8px 28px rgba(61, 43, 31, 0.2), 0 2px 6px rgba(61, 43, 31, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 6px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10px 30px rgba(61, 43, 31, 0.22), 0 2px 6px rgba(61, 43, 31, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -4px 8px rgba(61, 43, 31, 0.1),
+    inset 3px 0 6px rgba(255, 250, 240, 0.08);
   animation: gs-shadow-breathe 4s ease-in-out 3s infinite;
 }
 
@@ -520,12 +557,30 @@ button:focus-visible {
   left: -6px;
   width: 232px;
   height: 46px;
-  background: linear-gradient(145deg, #ead5ad, #c9b591 50%, #8b7355);
+  background:
+    repeating-linear-gradient(
+      93deg,
+      transparent 0 5px,
+      rgba(139, 115, 85, 0.05) 5px 6px
+    ),
+    linear-gradient(145deg, #f2e0be 0%, #dfc99f 50%, #a18764 100%);
   border-radius: 4px 4px 2px 2px;
-  box-shadow: 0 4px 12px rgba(61, 43, 31, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(61, 43, 31, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.14);
   transform-origin: bottom center;
   transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.8s ease;
   z-index: 2;
+}
+
+/* Lid lip: darker underside edge for depth */
+.box-lid::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 3px;
+  background: linear-gradient(180deg, rgba(61, 43, 31, 0.22), rgba(61, 43, 31, 0.08));
+  border-radius: 0 0 2px 2px;
 }
 
 .gift-box .box-lid.is-open {
@@ -560,24 +615,29 @@ button:focus-visible {
   transform: translateX(-50%) scaleY(1);
 }
 
-/* Ribbons */
+/* Ribbons — satin look: dark edges, bright center band */
 .gs-ribbon-v {
   position: absolute; left: 50%; top: 0; width: 18px; height: 130px;
   transform: translateX(-50%);
-  background: linear-gradient(90deg, #c9a030, var(--sunflower) 40%, #dbb84e 60%, #c9a030);
-  z-index: 1; opacity: 0.85;
+  background: linear-gradient(90deg,
+    #a8841f 0%, #d4a843 18%, #f2d06a 42%, #f7dc85 50%, #f2d06a 58%, #d4a843 82%, #a8841f 100%);
+  box-shadow: 0 0 5px rgba(178, 138, 40, 0.25);
+  z-index: 1; opacity: 0.92;
 }
 .gs-ribbon-h {
   position: absolute; top: 50%; left: 0; width: 220px; height: 18px;
   transform: translateY(-50%);
-  background: linear-gradient(180deg, #c9a030, var(--sunflower) 40%, #dbb84e 60%, #c9a030);
-  z-index: 1; opacity: 0.85;
+  background: linear-gradient(180deg,
+    #a8841f 0%, #d4a843 18%, #f2d06a 42%, #f7dc85 50%, #f2d06a 58%, #d4a843 82%, #a8841f 100%);
+  box-shadow: 0 0 5px rgba(178, 138, 40, 0.25);
+  z-index: 1; opacity: 0.92;
 }
 .gs-ribbon-lid-v {
   position: absolute; left: 50%; top: 0; width: 18px; height: 46px;
   transform: translateX(-50%);
-  background: linear-gradient(90deg, #c9a030, var(--sunflower) 40%, #dbb84e 60%, #c9a030);
-  z-index: 3; opacity: 0.85;
+  background: linear-gradient(90deg,
+    #a8841f 0%, #d4a843 18%, #f2d06a 42%, #f7dc85 50%, #f2d06a 58%, #d4a843 82%, #a8841f 100%);
+  z-index: 3; opacity: 0.92;
 }
 
 /* Ribbon shimmer */
@@ -594,43 +654,62 @@ button:focus-visible {
   60%      { opacity: 0; }
 }
 
-/* Bow */
+/* Bow — filled satin loops with inner shading */
 .gs-bow {
-  position: absolute; top: -10px; left: 50%; transform: translateX(-50%); z-index: 4;
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%); z-index: 4;
+  filter: drop-shadow(0 2px 3px rgba(120, 90, 30, 0.25));
 }
 .gs-bow-loop {
-  position: absolute; width: 28px; height: 18px;
-  border: 2.5px solid var(--sunflower); background: rgba(212, 168, 67, 0.15); border-radius: 50%;
+  position: absolute; width: 32px; height: 21px;
+  border-radius: 52% 48% 55% 45%;
+  background:
+    radial-gradient(ellipse 60% 55% at 32% 38%, rgba(255, 240, 190, 0.55), transparent 65%),
+    linear-gradient(135deg, #f2d06a 0%, #ddb44a 45%, #b98f28 100%);
+  box-shadow: inset 0 -2px 4px rgba(140, 105, 30, 0.4), inset 0 1px 2px rgba(255, 245, 210, 0.5);
 }
-.gs-bow-loop-l { left: -26px; top: 0; transform: rotate(-20deg); }
-.gs-bow-loop-r { left: 2px; top: 0; transform: rotate(20deg); }
+.gs-bow-loop-l { left: -30px; top: 0; transform: rotate(-24deg); }
+.gs-bow-loop-r { left: 0; top: 0; transform: rotate(24deg) scaleX(-1); }
 .gs-bow-knot {
-  position: absolute; left: -3px; top: 4px; width: 10px; height: 10px;
-  background: var(--sunflower); border-radius: 50%;
+  position: absolute; left: -5px; top: 5px; width: 13px; height: 12px;
+  background: linear-gradient(160deg, #f2d06a, #c99a30 70%, #a8841f);
+  border-radius: 40% 40% 45% 45%;
+  box-shadow: inset 0 -1px 2px rgba(120, 90, 30, 0.45);
+  z-index: 2;
 }
 .gs-bow-tail {
-  position: absolute; width: 2.5px; height: 20px;
-  background: var(--sunflower); border-radius: 0 0 2px 2px; top: 12px;
+  position: absolute; width: 7px; height: 26px; top: 13px;
+  background: linear-gradient(180deg, #ddb44a, #c49a2e 60%, #a8841f);
+  clip-path: polygon(15% 0, 85% 0, 100% 78%, 50% 100%, 0 78%);
 }
 .gs-bow-tail-l {
-  left: -8px; transform: rotate(15deg); transform-origin: top center;
+  left: -13px; transform: rotate(16deg); transform-origin: top center;
   animation: gs-tail-l 3s ease-in-out 3s infinite;
 }
 .gs-bow-tail-r {
-  left: 9px; transform: rotate(-15deg); transform-origin: top center;
+  left: 9px; transform: rotate(-16deg); transform-origin: top center;
   animation: gs-tail-r 3s ease-in-out 3.3s infinite;
 }
-@keyframes gs-tail-l { 0%, 100% { transform: rotate(15deg); } 50% { transform: rotate(20deg); } }
-@keyframes gs-tail-r { 0%, 100% { transform: rotate(-15deg); } 50% { transform: rotate(-20deg); } }
+@keyframes gs-tail-l { 0%, 100% { transform: rotate(16deg); } 50% { transform: rotate(22deg); } }
+@keyframes gs-tail-r { 0%, 100% { transform: rotate(-16deg); } 50% { transform: rotate(-22deg); } }
 
-/* Name tag */
+/* Name tag — small kraft paper tag with a punched hole */
 .name-tag {
-  position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
-  background: var(--ivory); padding: 4px 12px; border-radius: 3px;
+  position: absolute; top: 14px; left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  background: linear-gradient(160deg, #fffdf6, #f6ecd8);
+  padding: 5px 14px 5px 18px; border-radius: 3px;
   font-size: 11px; font-family: "Noto Serif TC", Georgia, serif;
   color: var(--ink); letter-spacing: 0.5px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 6px rgba(61, 43, 31, 0.12), inset 0 0 0 1px rgba(61, 43, 31, 0.05);
   z-index: 5; white-space: nowrap;
+}
+.name-tag::before {
+  content: "";
+  position: absolute; left: 6px; top: 50%;
+  width: 5px; height: 5px; transform: translateY(-50%);
+  border-radius: 50%;
+  background: rgba(61, 43, 31, 0.15);
+  box-shadow: inset 0 1px 1px rgba(61, 43, 31, 0.2);
 }
 
 /* Tiny sunflower on box corner */
@@ -725,9 +804,21 @@ button:focus-visible {
 .book-cover {
   width: 260px;
   height: 360px;
-  background: linear-gradient(145deg, #c9b591, #8b7355 60%, #5a3a28);
+  background:
+    repeating-linear-gradient(
+      35deg,
+      transparent 0 3px,
+      rgba(90, 58, 40, 0.06) 3px 4px
+    ),
+    repeating-linear-gradient(
+      -55deg,
+      transparent 0 3px,
+      rgba(90, 58, 40, 0.04) 3px 4px
+    ),
+    radial-gradient(ellipse 120% 90% at 30% 20%, rgba(255, 240, 210, 0.14), transparent 60%),
+    linear-gradient(145deg, #a8865f 0%, #8b6a48 45%, #6b4c34 80%, #543722 100%);
   border-radius: 3px 6px 6px 3px;
-  box-shadow: -3px 0 0 #5a3a28, -5px 0 0 #4a2e1e, 0 10px 36px rgba(61, 43, 31, 0.3),
+  box-shadow: -3px 0 0 #5a3a28, -5px 0 0 #4a2e1e, 0 14px 40px rgba(61, 43, 31, 0.35),
     0 4px 12px rgba(61, 43, 31, 0.2), inset 2px 0 4px rgba(255, 255, 255, 0.06);
   display: flex;
   flex-direction: column;
@@ -748,8 +839,29 @@ button:focus-visible {
   top: 0;
   bottom: 0;
   width: 18px;
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.05) 60%, transparent);
+  background:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 9px,
+      rgba(244, 190, 58, 0.28) 9px 13px,
+      transparent 13px 22px
+    ) 12px 0 / 1.5px 100% no-repeat,
+    linear-gradient(90deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.06) 60%, transparent);
   border-radius: 4px 0 0 4px;
+  pointer-events: none;
+}
+
+/* Gold-embossed frame */
+.book-cover::after {
+  content: "";
+  position: absolute;
+  inset: 16px 16px 16px 24px;
+  border: 1.5px solid rgba(244, 190, 58, 0.45);
+  border-radius: 2px;
+  box-shadow:
+    inset 0 0 0 3px rgba(61, 40, 24, 0.28),
+    inset 0 0 0 4px rgba(244, 190, 58, 0.18),
+    0 0 8px rgba(244, 190, 58, 0.08);
   pointer-events: none;
 }
 
@@ -760,36 +872,40 @@ button:focus-visible {
 
 .book-title {
   font-family: "Noto Serif TC", Georgia, serif;
-  font-size: 20px;
-  font-weight: 500;
-  color: var(--sunflower);
+  font-size: 21px;
+  font-weight: 600;
+  background: linear-gradient(180deg, #f9dc86 0%, #ecb93f 55%, #f4c95a 80%, #d9a52f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 1px rgba(30, 18, 8, 0.45));
   text-align: center;
-  line-height: 1.6;
-  letter-spacing: 1px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  line-height: 1.7;
+  letter-spacing: 2px;
   position: relative;
   z-index: 1;
 }
 
 .pressed-flower {
   position: relative;
-  width: 44px;
-  height: 44px;
-  margin-top: 16px;
-  opacity: 0.55;
+  width: 48px;
+  height: 48px;
+  margin-top: 18px;
+  opacity: 0.75;
   z-index: 1;
+  filter: drop-shadow(0 1px 1px rgba(30, 18, 8, 0.3));
 }
 
 .pressed-flower::before {
   content: "";
   position: absolute;
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(circle, #2a1d10 50%, var(--ink));
+  background: radial-gradient(circle at 40% 35%, #4a3520 30%, #2a1d10);
   z-index: 2;
 }
 
@@ -799,14 +915,14 @@ button:focus-visible {
   inset: 0;
   border-radius: 50%;
   z-index: 1;
-  background: radial-gradient(ellipse 36% 13% at 50% 5%, var(--rose) 56%, transparent 58%),
-    radial-gradient(ellipse 13% 36% at 95% 50%, var(--rose) 56%, transparent 58%),
-    radial-gradient(ellipse 36% 13% at 50% 95%, var(--rose) 56%, transparent 58%),
-    radial-gradient(ellipse 13% 36% at 5% 50%, var(--rose) 56%, transparent 58%),
-    radial-gradient(ellipse 28% 10% at 80% 20%, var(--rose) 50%, transparent 52%),
-    radial-gradient(ellipse 28% 10% at 80% 80%, var(--rose) 50%, transparent 52%),
-    radial-gradient(ellipse 28% 10% at 20% 80%, var(--rose) 50%, transparent 52%),
-    radial-gradient(ellipse 28% 10% at 20% 20%, var(--rose) 50%, transparent 52%);
+  background: radial-gradient(ellipse 36% 13% at 50% 5%, #e8bf52 56%, transparent 58%),
+    radial-gradient(ellipse 13% 36% at 95% 50%, #e8bf52 56%, transparent 58%),
+    radial-gradient(ellipse 36% 13% at 50% 95%, #e8bf52 56%, transparent 58%),
+    radial-gradient(ellipse 13% 36% at 5% 50%, #e8bf52 56%, transparent 58%),
+    radial-gradient(ellipse 28% 10% at 80% 20%, #d9a52f 50%, transparent 52%),
+    radial-gradient(ellipse 28% 10% at 80% 80%, #d9a52f 50%, transparent 52%),
+    radial-gradient(ellipse 28% 10% at 20% 80%, #d9a52f 50%, transparent 52%),
+    radial-gradient(ellipse 28% 10% at 20% 20%, #d9a52f 50%, transparent 52%);
 }
 
 /* =========================================
@@ -858,10 +974,17 @@ button:focus-visible {
   width: 100%;
   height: 100%;
   background: var(--ivory);
-  background-image: radial-gradient(
+  background-image:
+    radial-gradient(rgba(61, 43, 31, 0.02) 1px, transparent 1px),
+    radial-gradient(
       ellipse at 15% 50%,
       rgba(247, 238, 220, 0.3),
       transparent 50%
+    ),
+    radial-gradient(
+      ellipse 130% 100% at 50% 50%,
+      transparent 70%,
+      rgba(216, 190, 145, 0.12) 100%
     ),
     repeating-linear-gradient(
       0deg,
@@ -870,6 +993,7 @@ button:focus-visible {
       rgba(180, 160, 130, 0.04) 27px,
       rgba(180, 160, 130, 0.04) 28px
     );
+  background-size: 4px 4px, auto, auto, auto;
   border-radius: 4px 10px 10px 4px;
   padding: 32px 28px;
   padding-top: calc(48px + var(--safe-top));
@@ -881,6 +1005,23 @@ button:focus-visible {
   transition: transform 0.7s cubic-bezier(0.645, 0.045, 0.355, 1),
     visibility 0s linear 0s;
   overflow: hidden;
+}
+
+/* Stacked page edges along the right side */
+.book-page::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 7px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(61, 43, 31, 0.05) 0 1px,
+    transparent 1px 3px
+  );
+  border-radius: 0 8px 8px 0;
+  pointer-events: none;
 }
 
 .book-page::after {
@@ -930,7 +1071,7 @@ button:focus-visible {
 
 .progress-bar {
   position: fixed;
-  bottom: calc(20px + var(--safe-bottom));
+  bottom: calc(16px + var(--safe-bottom));
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
@@ -938,6 +1079,14 @@ button:focus-visible {
   color: var(--muted);
   letter-spacing: 0.5px;
   z-index: 60;
+  padding: 5px 14px;
+  background: rgba(255, 249, 237, 0.82);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(61, 43, 31, 0.08);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(61, 43, 31, 0.08);
+  white-space: nowrap;
 }
 
 /* =========================================
@@ -953,11 +1102,12 @@ button:focus-visible {
   height: 44px;
   min-width: 44px;
   min-height: 44px;
-  background: var(--sunflower);
+  background: linear-gradient(105deg, #f6c94e 0%, var(--sunflower) 45%, #d9a52f 100%);
   border: none;
   padding: 0;
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%);
-  transition: background 0.2s ease;
+  box-shadow: 0 3px 8px rgba(61, 43, 31, 0.18);
+  transition: background 0.2s ease, filter 0.2s ease;
   cursor: pointer;
 }
 
@@ -971,6 +1121,7 @@ button:focus-visible {
   inset: 0;
   z-index: 80;
   background: rgba(61, 43, 31, 0.3);
+  -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
@@ -979,9 +1130,11 @@ button:focus-visible {
 
 .toc-card {
   width: min(300px, calc(100% - 40px));
-  background: var(--ivory);
+  background:
+    radial-gradient(rgba(61, 43, 31, 0.02) 1px, transparent 1px) 0 0 / 4px 4px,
+    linear-gradient(170deg, #fffbf1, var(--ivory));
   border-radius: 8px;
-  box-shadow: 0 12px 40px rgba(61, 43, 31, 0.25);
+  box-shadow: 0 12px 40px rgba(61, 43, 31, 0.25), inset 0 0 0 1px rgba(61, 43, 31, 0.05);
   padding: 28px 24px 20px;
   position: relative;
 }
@@ -992,6 +1145,9 @@ button:focus-visible {
   text-align: center;
   margin-bottom: 20px;
   color: var(--ink);
+  padding-bottom: 12px;
+  background: linear-gradient(90deg, transparent 20%, rgba(244, 190, 58, 0.55) 50%, transparent 80%)
+    bottom / 100% 1.5px no-repeat;
 }
 
 .toc-chapter-list {

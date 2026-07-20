@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, defineAsyncComponent } from 'vue'
 import { type Locale } from '@/content/localization'
 import { getLocalizedText } from '@/content/localization'
 import { useBookEngine } from '@/composables/useBookEngine'
 
-import PreIntro from '@/components/PreIntro.vue'
 import GiftBox from '@/components/GiftBox.vue'
 import BookCover from '@/components/BookCover.vue'
 import BookPageRenderer from '@/components/BookPageRenderer.vue'
@@ -12,6 +11,16 @@ import BookPageRenderer from '@/components/BookPageRenderer.vue'
 const locale = ref<Locale>('zh-TW')
 const phase = ref<'preintro' | 'gift' | 'unboxing' | 'book' | 'opening' | 'reading'>('preintro')
 const giftEntering = ref(false)
+
+// Code-split: keeps three.js out of the main bundle; if the chunk fails
+// to load, fall through to the gift box directly
+const PreIntro = defineAsyncComponent({
+  loader: () => import('@/components/PreIntro.vue'),
+  onError(_error, _retry, fail) {
+    phase.value = 'gift'
+    fail()
+  },
+})
 
 const engine = useBookEngine()
 
