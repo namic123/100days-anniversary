@@ -9,7 +9,7 @@ import BookCover from '@/components/BookCover.vue'
 import BookPageRenderer from '@/components/BookPageRenderer.vue'
 
 const locale = ref<Locale>('zh-TW')
-const phase = ref<'gift' | 'book' | 'reading'>('gift')
+const phase = ref<'gift' | 'book' | 'opening' | 'reading'>('gift')
 
 const engine = useBookEngine()
 
@@ -82,8 +82,23 @@ function onGiftOpened() {
   phase.value = 'book'
 }
 
-function onBookOpened() {
-  phase.value = 'reading'
+async function onBookOpened() {
+  // Show reading container behind the opening cover (scaled down)
+  phase.value = 'opening'
+  await nextTick()
+
+  // Trigger scale-up animation on next frame
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const el = document.querySelector('.reading-container') as HTMLElement | null
+      if (el) el.classList.add('is-entered')
+    })
+  })
+
+  // Wait for the zoom-in animation to finish, then switch to full reading mode
+  setTimeout(() => {
+    phase.value = 'reading'
+  }, 800)
 }
 
 function restart() {
@@ -302,18 +317,19 @@ function isFirstInSection(index: number): boolean {
       @click="startMusicOnce"
     />
 
-    <!-- Phase 2: Book Cover -->
+    <!-- Phase 2: Book Cover (stays visible during opening transition) -->
     <BookCover
-      v-if="phase === 'book'"
+      v-if="phase === 'book' || phase === 'opening'"
       :locale="locale"
       @opened="onBookOpened"
       @click="startMusicOnce"
     />
 
-    <!-- Phase 3: Reading Mode -->
+    <!-- Phase 3: Reading Mode (appears during opening, scales up to full) -->
     <div
-      v-if="phase === 'reading'"
+      v-if="phase === 'opening' || phase === 'reading'"
       class="reading-container"
+      :class="{ 'is-opening': phase === 'opening' }"
       @touchstart.passive="onTouchStart"
       @touchend.passive="onTouchEnd"
     >

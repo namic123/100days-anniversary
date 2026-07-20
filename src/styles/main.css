@@ -438,6 +438,20 @@ button:focus-visible {
   z-index: 10;
 }
 
+/* Book-open transition: starts small behind cover, scales up to full */
+.reading-container.is-opening {
+  z-index: 5;
+  opacity: 0;
+  transform: scale(0.65);
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.4s ease;
+}
+
+.reading-container.is-opening.is-entered {
+  opacity: 1;
+  transform: scale(1);
+}
+
 .book-reader {
   position: relative;
   width: 100%;
