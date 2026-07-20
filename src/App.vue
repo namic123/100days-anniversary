@@ -283,7 +283,7 @@ function isFirstInSection(index: number): boolean {
     class="app-shell"
     tabindex="0"
     @keydown="onKeydown"
-    @click="localeMenuOpen = false"
+    @click="localeMenuOpen = false; startMusicOnce()"
   >
     <!-- Bottom-right FAB stack -->
     <div
@@ -330,7 +330,6 @@ function isFirstInSection(index: number): boolean {
       :locale="locale"
       :is-unboxing="phase === 'unboxing'"
       @opened="onGiftOpened"
-      @interact="startMusicOnce"
     />
 
     <!-- Phase 2: Book Cover (appears during unboxing, stays during opening) -->
@@ -339,7 +338,6 @@ function isFirstInSection(index: number): boolean {
       :locale="locale"
       :is-unboxing="phase === 'unboxing'"
       @opened="onBookOpened"
-      @interact="startMusicOnce"
     />
 
     <!-- Phase 3: Reading Mode (appears during opening, scales up to full) -->

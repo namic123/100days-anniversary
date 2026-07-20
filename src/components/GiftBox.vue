@@ -4,12 +4,11 @@ import { getLocalizedText, type Locale } from '@/content/localization'
 import { uiText } from '@/content/ui'
 
 const props = defineProps<{ locale: Locale; isUnboxing?: boolean }>()
-const emit = defineEmits<{ opened: []; interact: [] }>()
+const emit = defineEmits<{ opened: [] }>()
 
 const isOpening = ref(false)
 
 function openBox() {
-  emit('interact')
   if (isOpening.value) return
   isOpening.value = true
   setTimeout(() => emit('opened'), 800)

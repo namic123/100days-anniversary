@@ -4,12 +4,11 @@ import { getLocalizedText, type Locale } from '@/content/localization'
 import { uiText } from '@/content/ui'
 
 const props = defineProps<{ locale: Locale; isUnboxing?: boolean }>()
-const emit = defineEmits<{ opened: []; interact: [] }>()
+const emit = defineEmits<{ opened: [] }>()
 
 const isFlipping = ref(false)
 
 function openBook() {
-  emit('interact')
   if (isFlipping.value) return
   isFlipping.value = true
   // Emit early so App can show the first page behind the fading cover
