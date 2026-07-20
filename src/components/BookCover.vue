@@ -11,7 +11,8 @@ const isFlipping = ref(false)
 function openBook() {
   if (isFlipping.value) return
   isFlipping.value = true
-  setTimeout(() => emit('opened'), 1000)
+  // Emit early so App can show the first page behind the fading cover
+  setTimeout(() => emit('opened'), 100)
 }
 </script>
 

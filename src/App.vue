@@ -83,7 +83,7 @@ function onGiftOpened() {
 }
 
 async function onBookOpened() {
-  // Show reading container behind the opening cover (scaled down)
+  // Show reading container at book-cover size behind the fading cover
   phase.value = 'opening'
   await nextTick()
 
@@ -95,10 +95,10 @@ async function onBookOpened() {
     })
   })
 
-  // Wait for the zoom-in animation to finish, then switch to full reading mode
+  // Wait for scale-up to finish, then switch to full reading mode
   setTimeout(() => {
     phase.value = 'reading'
-  }, 800)
+  }, 1000)
 }
 
 function restart() {
