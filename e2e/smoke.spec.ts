@@ -67,8 +67,11 @@ test('full flow: gift box → book → reading → language switch', async ({ pa
 
   await page.goto(baseUrl)
 
+  // Phase 0: Pre-intro — skip it to reach the gift box
+  await page.getByRole('button', { name: '跳過' }).click()
+
   // Phase 1: Gift box visible with zh-TW message and name tag
-  await expect(page.getByText('給苙綺')).toBeVisible()
+  await expect(page.getByText('給苙綺')).toBeVisible({ timeout: 3000 })
 
   // Open gift box
   await page.getByRole('button', { name: '輕輕點一下禮物盒' }).click()

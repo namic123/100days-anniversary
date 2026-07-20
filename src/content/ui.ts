@@ -31,4 +31,14 @@ export const uiText: Record<string, LocalizedText> = {
     ko: '좌우를 탭하여 넘기세요',
     en: 'Swipe or tap to turn pages',
   },
+  touchSeed: {
+    'zh-TW': '輕觸那顆種子',
+    ko: '씨앗을 터치해봐',
+    en: 'Touch the seed',
+  },
+  skipIntro: {
+    'zh-TW': '跳過',
+    ko: '건너뛰기',
+    en: 'Skip',
+  },
 }

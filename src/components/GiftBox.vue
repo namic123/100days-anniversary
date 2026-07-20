@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { getLocalizedText, type Locale } from '@/content/localization'
 import { uiText } from '@/content/ui'
 
-const props = defineProps<{ locale: Locale; isUnboxing?: boolean }>()
+const props = defineProps<{ locale: Locale; isUnboxing?: boolean; isEntering?: boolean }>()
 const emit = defineEmits<{ opened: [] }>()
 
 const isOpening = ref(false)
@@ -18,7 +18,7 @@ function openBox() {
 <template>
   <div
     class="gift-scene"
-    :class="{ 'is-unboxing': isUnboxing }"
+    :class="{ 'is-unboxing': isUnboxing, 'is-entering': isEntering }"
   >
     <!-- Sunlight glow -->
     <div
@@ -115,6 +115,7 @@ function openBox() {
       <!-- Gift box -->
       <div
         class="gift-box"
+        :class="{ 'is-opening': isOpening }"
         role="button"
         tabindex="0"
         :aria-label="getLocalizedText(uiText.tapToOpen, props.locale)"

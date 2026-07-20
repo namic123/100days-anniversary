@@ -4,12 +4,14 @@ import { type Locale } from '@/content/localization'
 import { getLocalizedText } from '@/content/localization'
 import { useBookEngine } from '@/composables/useBookEngine'
 
+import PreIntro from '@/components/PreIntro.vue'
 import GiftBox from '@/components/GiftBox.vue'
 import BookCover from '@/components/BookCover.vue'
 import BookPageRenderer from '@/components/BookPageRenderer.vue'
 
 const locale = ref<Locale>('zh-TW')
-const phase = ref<'gift' | 'unboxing' | 'book' | 'opening' | 'reading'>('gift')
+const phase = ref<'preintro' | 'gift' | 'unboxing' | 'book' | 'opening' | 'reading'>('preintro')
+const giftEntering = ref(false)
 
 const engine = useBookEngine()
 
@@ -78,6 +80,15 @@ const tocHeading = {
   en: 'Contents',
 }
 
+function onPreIntroCompleted() {
+  // Gift scene fades in from the warm glow left by the particle gather
+  giftEntering.value = true
+  phase.value = 'gift'
+  setTimeout(() => {
+    giftEntering.value = false
+  }, 1400)
+}
+
 async function onGiftOpened() {
   // Show book behind the gift box during unboxing
   phase.value = 'unboxing'
@@ -91,10 +102,10 @@ async function onGiftOpened() {
     })
   })
 
-  // After book has risen and gift faded, switch to book phase
+  // After book has risen (0.15s delay + 1.5s rise) and gift faded, switch phase
   setTimeout(() => {
     phase.value = 'book'
-  }, 1400)
+  }, 1700)
 }
 
 async function onBookOpened() {
@@ -110,10 +121,10 @@ async function onBookOpened() {
     })
   })
 
-  // Wait for scale-up to finish, then switch to full reading mode
+  // Wait for scale-up (1.1s) to finish, then switch to full reading mode
   setTimeout(() => {
     phase.value = 'reading'
-  }, 1000)
+  }, 1150)
 }
 
 function restart() {
@@ -324,11 +335,19 @@ function isFirstInSection(index: number): boolean {
       </div>
     </div>
 
+    <!-- Phase 0: Pre-intro (sunflower growth + particle morphing) -->
+    <PreIntro
+      v-if="phase === 'preintro'"
+      :locale="locale"
+      @completed="onPreIntroCompleted"
+    />
+
     <!-- Phase 1: Gift Box (stays visible during unboxing) -->
     <GiftBox
       v-if="phase === 'gift' || phase === 'unboxing'"
       :locale="locale"
       :is-unboxing="phase === 'unboxing'"
+      :is-entering="giftEntering"
       @opened="onGiftOpened"
     />
 
