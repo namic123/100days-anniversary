@@ -330,7 +330,7 @@ function isFirstInSection(index: number): boolean {
       :locale="locale"
       :is-unboxing="phase === 'unboxing'"
       @opened="onGiftOpened"
-      @click="startMusicOnce"
+      @interact="startMusicOnce"
     />
 
     <!-- Phase 2: Book Cover (appears during unboxing, stays during opening) -->
@@ -339,7 +339,7 @@ function isFirstInSection(index: number): boolean {
       :locale="locale"
       :is-unboxing="phase === 'unboxing'"
       @opened="onBookOpened"
-      @click="startMusicOnce"
+      @interact="startMusicOnce"
     />
 
     <!-- Phase 3: Reading Mode (appears during opening, scales up to full) -->
