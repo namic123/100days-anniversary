@@ -12,8 +12,8 @@ const locale = ref<Locale>('zh-TW')
 const phase = ref<'preintro' | 'gift' | 'unboxing' | 'book' | 'opening' | 'reading'>('preintro')
 const giftEntering = ref(false)
 
-// Code-split: keeps three.js out of the main bundle; if the chunk fails
-// to load, fall through to the gift box directly
+// Code-split: keeps the canvas intro out of the main bundle; if the chunk
+// fails to load, fall through to the gift box directly
 const PreIntro = defineAsyncComponent({
   loader: () => import('@/components/PreIntro.vue'),
   onError(_error, _retry, fail) {
