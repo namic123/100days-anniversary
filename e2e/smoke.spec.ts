@@ -93,7 +93,7 @@ test('full flow: gift scene → reading → language switch', async ({ page }) =
   await page.getByRole('button', { name: 'Language' }).click()
   await page.getByRole('button', { name: '한국어' }).click()
 
-  // Progress "1 / N" should be visible.
+  // The diary folio "1 / N" should be visible (reader starts on page 1).
   await expect(page.getByText(/1 \/ \d+/)).toBeVisible({ timeout: 5_000 })
 
   // No console errors.
