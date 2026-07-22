@@ -1144,6 +1144,16 @@ onBeforeUnmount(() => { teardown() })
   transition: opacity 1.3s ease, transform 1.5s cubic-bezier(0.22, 0.8, 0.3, 1);
 }
 .pi-copy.pi-show { opacity: 1; transform: none; }
+/* soft dark scrim behind the copy so white text stays readable over the bright moon */
+.pi-copy::before {
+  content: "";
+  position: absolute;
+  left: -6%; right: -6%; top: -16%; bottom: -16%;
+  z-index: -1;
+  background: radial-gradient(ellipse 80% 62% at 50% 50%, rgba(8, 5, 3, 0.62) 0%, rgba(8, 5, 3, 0.46) 44%, rgba(8, 5, 3, 0.2) 68%, transparent 82%);
+  filter: blur(10px);
+  pointer-events: none;
+}
 .pi-copy .pi-line {
   display: block;
   font-family: var(--serif); font-weight: 500;
