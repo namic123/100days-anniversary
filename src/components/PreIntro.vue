@@ -1151,6 +1151,8 @@ onBeforeUnmount(() => { teardown() })
   line-height: 1.85; letter-spacing: 0.06em;
   color: var(--cream);
   text-shadow: 0 0 2px rgba(16, 10, 5, 0.95), 0 0 9px rgba(16, 10, 5, 0.9), 0 1px 3px rgba(0, 0, 0, 0.85), 0 2px 22px rgba(0, 0, 0, 0.55), 0 0 34px rgba(255, 184, 92, 0.16);
+  -webkit-text-stroke: 0.9px rgba(18, 11, 5, 0.9);
+  paint-order: stroke fill;
 }
 .pi-copy.pi-warm .pi-line { color: #ffe8bf; text-shadow: 0 0 2px rgba(16, 10, 5, 0.95), 0 0 9px rgba(16, 10, 5, 0.85), 0 1px 3px rgba(0, 0, 0, 0.8), 0 2px 20px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 184, 92, 0.2); }
 .pi-copy .pi-name { color: var(--gold); text-shadow: 0 0 28px rgba(244, 190, 58, 0.6); }
