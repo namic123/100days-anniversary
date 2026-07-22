@@ -4,20 +4,32 @@ import { type Locale } from '@/content/localization'
 import { getLocalizedText } from '@/content/localization'
 import { useBookEngine } from '@/composables/useBookEngine'
 
-import GiftBox from '@/components/GiftBox.vue'
-import BookCover from '@/components/BookCover.vue'
 import BookPageRenderer from '@/components/BookPageRenderer.vue'
 
 const locale = ref<Locale>('zh-TW')
-const phase = ref<'preintro' | 'gift' | 'unboxing' | 'book' | 'opening' | 'reading'>('preintro')
-const giftEntering = ref(false)
+const phase = ref<'preintro' | 'giftscene' | 'reading'>('preintro')
+// Controls mounting of the WebGL gift scene independently of `phase` so it can
+// stay mounted (rendering) during the crossfade into reading mode.
+const showGiftScene = ref(false)
+// Drives the reading-mode opacity crossfade over the gift scene.
+const readingRevealed = ref(false)
 
 // Code-split: keeps the canvas intro out of the main bundle; if the chunk
-// fails to load, fall through to the gift box directly
+// fails to load, fall through to the gift scene directly
 const PreIntro = defineAsyncComponent({
   loader: () => import('@/components/PreIntro.vue'),
   onError(_error, _retry, fail) {
-    phase.value = 'gift'
+    onPreIntroCompleted()
+    fail()
+  },
+})
+
+// Code-split: keeps three.js out of the main bundle. If the chunk fails to
+// load, fall straight through to reading mode so the app never dead-ends.
+const GiftScene = defineAsyncComponent({
+  loader: () => import('@/components/GiftScene.vue'),
+  onError(_error, _retry, fail) {
+    onGiftOpened()
     fail()
   },
 })
@@ -90,55 +102,43 @@ const tocHeading = {
 }
 
 function onPreIntroCompleted() {
-  // Gift scene fades in from the warm glow left by the particle gather
-  giftEntering.value = true
-  phase.value = 'gift'
-  setTimeout(() => {
-    giftEntering.value = false
-  }, 1400)
+  // Hand off to the WebGL gift scene, which fades in from its own warm veil to
+  // continue the intro's warm-glow handoff.
+  phase.value = 'giftscene'
+  showGiftScene.value = true
 }
 
 async function onGiftOpened() {
-  // Show book behind the gift box during unboxing
-  phase.value = 'unboxing'
+  // The 3D book has finished opening — crossfade reading mode in over the
+  // still-rendering gift scene, then unmount the scene (triggers its teardown).
+  if (phase.value === 'reading') return
+  phase.value = 'reading'
+  readingRevealed.value = false
   await nextTick()
 
-  // Trigger the book rise animation on next frame
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      const book = document.querySelector('.book-container') as HTMLElement | null
-      if (book) book.classList.add('is-risen')
+      readingRevealed.value = true
     })
   })
 
-  // After book has risen (0.15s delay + 1.5s rise) and gift faded, switch phase
+  // After the opacity crossfade completes, unmount the gift scene.
   setTimeout(() => {
-    phase.value = 'book'
-  }, 1700)
-}
-
-async function onBookOpened() {
-  // Show reading container at book-cover size behind the fading cover
-  phase.value = 'opening'
-  await nextTick()
-
-  // Trigger scale-up animation on next frame
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      const el = document.querySelector('.reading-container') as HTMLElement | null
-      if (el) el.classList.add('is-entered')
-    })
-  })
-
-  // Wait for scale-up (1.1s) to finish, then switch to full reading mode
-  setTimeout(() => {
-    phase.value = 'reading'
-  }, 1150)
+    showGiftScene.value = false
+  }, 1100)
 }
 
 function restart() {
+  // Read again: reset the book and return to the gift scene. Selected language
+  // is preserved (we never touch `locale`).
   engine.resetBook()
-  phase.value = 'gift'
+  readingRevealed.value = false
+  showGiftScene.value = false
+  phase.value = 'giftscene'
+  // Remount fresh on the next tick so the scene replays from the box.
+  nextTick(() => {
+    showGiftScene.value = true
+  })
 }
 
 // Progress display with chapter awareness
@@ -351,28 +351,18 @@ function isFirstInSection(index: number): boolean {
       @completed="onPreIntroCompleted"
     />
 
-    <!-- Phase 1: Gift Box (stays visible during unboxing) -->
-    <GiftBox
-      v-if="phase === 'gift' || phase === 'unboxing'"
+    <!-- Phase 1: WebGL gift scene (box → open → diary rises → cover → open) -->
+    <GiftScene
+      v-if="showGiftScene"
       :locale="locale"
-      :is-unboxing="phase === 'unboxing'"
-      :is-entering="giftEntering"
       @opened="onGiftOpened"
     />
 
-    <!-- Phase 2: Book Cover (appears during unboxing, stays during opening) -->
-    <BookCover
-      v-if="phase === 'unboxing' || phase === 'book' || phase === 'opening'"
-      :locale="locale"
-      :is-unboxing="phase === 'unboxing'"
-      @opened="onBookOpened"
-    />
-
-    <!-- Phase 3: Reading Mode (appears during opening, scales up to full) -->
+    <!-- Phase 2: Reading Mode (crossfades in over the opened 3D book) -->
     <div
-      v-if="phase === 'opening' || phase === 'reading'"
-      class="reading-container"
-      :class="{ 'is-opening': phase === 'opening' }"
+      v-if="phase === 'reading'"
+      class="reading-container reading-crossfade"
+      :class="{ 'is-revealed': readingRevealed }"
       @touchstart.passive="onTouchStart"
       @touchend.passive="onTouchEnd"
     >

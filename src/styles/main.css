@@ -941,6 +941,15 @@ button:focus-visible {
   z-index: 10;
 }
 
+/* Crossfade: reading mode fades in over the still-rendering WebGL gift scene */
+.reading-container.reading-crossfade {
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+.reading-container.reading-crossfade.is-revealed {
+  opacity: 1;
+}
+
 /* Book-open transition: starts at book-cover size behind cover, scales up */
 .reading-container.is-opening {
   z-index: 5;

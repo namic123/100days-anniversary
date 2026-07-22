@@ -57,7 +57,7 @@ test.afterAll(async () => {
   })
 })
 
-test('full flow: gift box → book → reading → language switch', async ({ page }) => {
+test('full flow: WebGL gift scene → book opens → reading → language switch', async ({ page }) => {
   const errors: string[] = []
   page.on('console', (message) => {
     if (message.type() === 'error') {
@@ -67,35 +67,38 @@ test('full flow: gift box → book → reading → language switch', async ({ pa
 
   await page.goto(baseUrl)
 
-  // Phase 0: Pre-intro — skip it to reach the gift box
+  // Phase 0: Pre-intro — skip it to reach the gift scene
   await page.getByRole('button', { name: '跳過' }).click()
 
-  // Phase 1: Gift box visible with zh-TW message and name tag
-  await expect(page.getByText('給苙綺')).toBeVisible({ timeout: 3000 })
+  // Phase 1: WebGL gift scene mounts and boots (its gift message shows).
+  const scene = page.locator('.gsx-root')
+  await expect(scene).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.gsx-gift-message.show')).toBeVisible({ timeout: 15_000 })
 
-  // Open gift box
-  await page.getByRole('button', { name: '輕輕點一下禮物盒' }).click()
+  // Assert WebGL rendered (not the reduced-motion / no-WebGL CSS fallback).
+  await expect(page.locator('.gsx-fallback')).toHaveCount(0)
 
-  // Wait for gift box + unboxing animation
-  await page.waitForTimeout(2500)
+  const canvas = page.locator('canvas.gsx-canvas')
 
-  // Phase 2: Book cover appears
-  await expect(page.getByText('我們的100天日記')).toBeVisible({ timeout: 3000 })
+  // Tap the scene to open the box; wait for the diary to rise and present.
+  // (Timeouts are generous: the box→rise→present choreography is several seconds
+  // and runs slower under software WebGL in headless CI.)
+  await canvas.click()
+  await expect(page.locator('.gsx-root[data-gs-phase="bookready"]')).toBeVisible({ timeout: 40_000 })
 
-  // Open book (force click since app-shell may intercept)
-  await page.getByRole('button', { name: '我們的100天日記' }).click({ force: true })
+  // Tap again to open the book cover; the app then crosses into reading mode.
+  await canvas.click()
 
-  // Phase 3: Reading mode — first page visible
-  await expect(page.locator('.reading-container')).toBeVisible({ timeout: 3000 })
+  // Phase 2: Reading mode — the reading container is present.
+  await expect(page.locator('.reading-container')).toBeVisible({ timeout: 40_000 })
 
-  // Switch language to Korean via locale FAB
+  // Switch language to Korean via the locale FAB.
   await page.getByRole('button', { name: 'Language' }).click()
   await page.getByRole('button', { name: '한국어' }).click()
 
-  // Verify Korean content appears (name tag would be in Korean if visible)
-  // Progress bar should be visible
-  await expect(page.getByText(/1 \/ \d+/)).toBeVisible()
+  // Progress "1 / N" should be visible.
+  await expect(page.getByText(/1 \/ \d+/)).toBeVisible({ timeout: 5_000 })
 
-  // No console errors
+  // No console errors.
   expect(errors).toEqual([])
 })
