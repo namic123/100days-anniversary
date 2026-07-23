@@ -3,6 +3,7 @@ import { ref, computed, nextTick, defineAsyncComponent } from 'vue'
 import { type Locale } from '@/content/localization'
 
 import DiaryReader from '@/components/DiaryReader.vue'
+import StarIntro from '@/components/StarIntro.vue'
 
 const locale = ref<Locale>('zh-TW')
 const phase = ref<'preintro' | 'giftscene' | 'reading'>('preintro')
@@ -11,16 +12,6 @@ const phase = ref<'preintro' | 'giftscene' | 'reading'>('preintro')
 const showGiftScene = ref(false)
 // Drives the reading-mode opacity crossfade over the gift scene.
 const readingRevealed = ref(false)
-
-// Code-split: keeps the canvas intro out of the main bundle; if the chunk
-// fails to load, fall through to the gift scene directly
-const PreIntro = defineAsyncComponent({
-  loader: () => import('@/components/PreIntro.vue'),
-  onError(_error, _retry, fail) {
-    onPreIntroCompleted()
-    fail()
-  },
-})
 
 // Code-split: keeps three.js out of the main bundle. If the chunk fails to
 // load, fall straight through to reading mode so the app never dead-ends.
@@ -169,8 +160,8 @@ function restart() {
       </div>
     </div>
 
-    <!-- Phase 0: Pre-intro (sunflower growth + particle morphing) -->
-    <PreIntro
+    <!-- Phase 0: Pre-intro (constellation tour → meteor shower → gift box) -->
+    <StarIntro
       v-if="phase === 'preintro'"
       :locale="locale"
       @completed="onPreIntroCompleted"
