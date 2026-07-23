@@ -16,6 +16,20 @@ const engine = useBookEngine()
 const current = engine.currentIndex
 const total = engine.totalPages
 
+/* Only render a small window of pages around the current one. All pages are
+   opaque and stacked, so you never see more than the current page plus the one
+   mid-flip — rendering all 19 as 3D-composited layers was the main source of
+   page-turn jank on mobile. Radius 1 covers the outgoing/incoming flip pages. */
+const windowPages = computed(() => {
+  const pages = engine.pages.value
+  const cur = current.value
+  const res: { page: BookPage; index: number }[] = []
+  for (let i = 0; i < pages.length; i++) {
+    if (Math.abs(i - cur) <= 1) res.push({ page: pages[i], index: i })
+  }
+  return res
+})
+
 /* ---------- localized copy (exact objects harvested from the Page*.vue components) ---------- */
 const introChapterLabel: LocalizedText = {
   'zh-TW': '我們的第一個100天',
@@ -283,6 +297,28 @@ function growSunflower(stage: number): string {
   return s
 }
 
+/* All character/scene art is static — build each variant ONCE so the template
+   references a stable string. Rebuilding these on every render made Vue re-parse
+   the v-html of every page on each reactive tick during a flip. */
+const ART = {
+  jayIntro: jay(92, 'r'),
+  lichiIntro: lichi(92, 'l'),
+  jayLand: jay(78),
+  lichiLand: lichi(78),
+  jayFut: jay(70, 'r'),
+  lichiFut: lichi(70, 'l'),
+  jayEnd: jay(74, 'r'),
+  lichiEnd: lichi(74, 'l'),
+  call: callScene(),
+  moon64: moon(64),
+  moon58: moon(58),
+  plane: plane(),
+  landKo: landMound('#e7d3ab'),
+  landTw: landMound('#d7e0b0'),
+  hand: handFlower(),
+  sunflower: sunflower(92),
+} as const
+
 /* =========================================================
    Page-turn engine (CSS 3D rotateY around the left spine)
    ========================================================= */
@@ -292,10 +328,16 @@ const reduceMotion = typeof window !== 'undefined'
 
 const busy = ref(false)
 const flippingIndex = ref<number | null>(null)
-const shadingIndex = ref<number | null>(null)
 const noAnim = ref(false)
 const hintHidden = ref(false)
-const pageEls = ref<HTMLElement[]>([])
+
+/* Map global page index -> its DOM element. Populated by the :ref callback so it
+   stays correct even though only a windowed subset of pages is mounted. */
+const pageElMap = new Map<number, HTMLElement>()
+function setPageEl(index: number, el: Element | null) {
+  if (el) pageElMap.set(index, el as HTMLElement)
+  else pageElMap.delete(index)
+}
 
 const timers = new Set<ReturnType<typeof setTimeout>>()
 function later(fn: () => void, ms: number) {
@@ -313,7 +355,7 @@ function zFor(index: number): number {
 function waitFlip(idx: number): Promise<void> {
   return new Promise((resolve) => {
     if (reduceMotion) { resolve(); return }
-    const el = pageEls.value[idx]
+    const el = pageElMap.get(idx)
     let done = false
     const finish = () => {
       if (done) return
@@ -325,7 +367,7 @@ function waitFlip(idx: number): Promise<void> {
       if (e.propertyName === 'transform') finish()
     }
     el?.addEventListener('transitionend', onEnd)
-    later(finish, 1100)
+    later(finish, 800)
   })
 }
 
@@ -336,10 +378,8 @@ async function goNext() {
   if (reduceMotion) { engine.flipForward(); return }
   busy.value = true
   flippingIndex.value = flipIdx
-  shadingIndex.value = flipIdx
   engine.flipForward()
   await waitFlip(flipIdx)
-  shadingIndex.value = null
   flippingIndex.value = null
   busy.value = false
 }
@@ -351,10 +391,8 @@ async function goPrev() {
   if (reduceMotion) { engine.flipBack(); return }
   busy.value = true
   flippingIndex.value = flipIdx
-  shadingIndex.value = flipIdx
   engine.flipBack()
   await waitFlip(flipIdx)
-  shadingIndex.value = null
   flippingIndex.value = null
   busy.value = false
 }
@@ -440,15 +478,15 @@ onBeforeUnmount(() => {
     <div class="diary-book-area">
       <div class="diary-book">
         <div
-          v-for="(page, index) in engine.pages.value"
+          v-for="{ page, index } in windowPages"
           :key="page.id"
-          ref="pageEls"
+          :ref="(el) => setPageEl(index, el as Element | null)"
           class="diary-page"
           :class="[
             page.section,
             {
               flipped: index < current,
-              shading: shadingIndex === index,
+              flipping: flippingIndex === index,
               'no-anim': noAnim,
             },
           ]"
@@ -480,9 +518,9 @@ onBeforeUnmount(() => {
                 </div>
                 <div class="intro-scene svg-slot">
                   <!-- eslint-disable-next-line vue/no-v-html -->
-                  <span v-html="jay(92, 'r')" />
+                  <span v-html="ART.jayIntro" />
                   <!-- eslint-disable-next-line vue/no-v-html -->
-                  <span v-html="lichi(92, 'l')" />
+                  <span v-html="ART.lichiIntro" />
                 </div>
                 <div class="intro-dates">
                   {{ introDates }}
@@ -509,7 +547,7 @@ onBeforeUnmount(() => {
               </div>
               <div class="tl-scene svg-slot">
                 <!-- eslint-disable-next-line vue/no-v-html -->
-                <span v-html="callScene()" />
+                <span v-html="ART.call" />
               </div>
             </template>
 
@@ -562,23 +600,23 @@ onBeforeUnmount(() => {
                 <div class="map-scene">
                   <div class="moon-wrap svg-slot">
                     <!-- eslint-disable-next-line vue/no-v-html -->
-                    <span v-html="moon(64)" />
+                    <span v-html="ART.moon64" />
                   </div>
                   <div class="plane-row svg-slot">
                     <span class="dist-badge">1,478km ✈</span>
                     <!-- eslint-disable-next-line vue/no-v-html -->
-                    <span v-html="plane()" />
+                    <span v-html="ART.plane" />
                   </div>
                   <div class="lands">
                     <div class="land">
                       <div class="svg-slot">
                         <!-- eslint-disable-next-line vue/no-v-html -->
-                        <span v-html="jay(78)" />
+                        <span v-html="ART.jayLand" />
                       </div>
                       <!-- eslint-disable-next-line vue/no-v-html -->
                       <span
                         class="svg-slot"
-                        v-html="landMound('#e7d3ab')"
+                        v-html="ART.landKo"
                       />
                       <div class="land-label">
                         {{ t(koreaLabel) }}
@@ -590,12 +628,12 @@ onBeforeUnmount(() => {
                     <div class="land">
                       <div class="svg-slot">
                         <!-- eslint-disable-next-line vue/no-v-html -->
-                        <span v-html="lichi(78)" />
+                        <span v-html="ART.lichiLand" />
                       </div>
                       <!-- eslint-disable-next-line vue/no-v-html -->
                       <span
                         class="svg-slot"
-                        v-html="landMound('#d7e0b0')"
+                        v-html="ART.landTw"
                       />
                       <div class="land-label">
                         {{ t(taiwanLabel) }}
@@ -608,14 +646,11 @@ onBeforeUnmount(() => {
                 </div>
               </template>
               <template v-else>
-                <h2 class="title small">
-                  {{ t(ktChapterLabel) }}
-                </h2>
                 <div class="rule" />
                 <div class="map-note-scene">
                   <div class="moon-wrap svg-slot">
                     <!-- eslint-disable-next-line vue/no-v-html -->
-                    <span v-html="moon(58)" />
+                    <span v-html="ART.moon58" />
                   </div>
                   <p class="map-note">
                     {{ t(mapText) }}
@@ -626,9 +661,6 @@ onBeforeUnmount(() => {
 
             <!-- FUTURE -->
             <template v-else-if="page.section === 'future'">
-              <div class="eyebrow">
-                {{ t(futureChapterLabel) }}
-              </div>
               <h2 class="title small">
                 {{ t(futureChapterLabel) }}
               </h2>
@@ -646,9 +678,9 @@ onBeforeUnmount(() => {
               </div>
               <div class="fut-scene svg-slot">
                 <!-- eslint-disable-next-line vue/no-v-html -->
-                <span v-html="jay(70, 'r')" />
+                <span v-html="ART.jayFut" />
                 <!-- eslint-disable-next-line vue/no-v-html -->
-                <span v-html="lichi(70, 'l')" />
+                <span v-html="ART.lichiFut" />
               </div>
             </template>
 
@@ -659,7 +691,7 @@ onBeforeUnmount(() => {
               </div>
               <div class="letter-scene svg-slot">
                 <!-- eslint-disable-next-line vue/no-v-html -->
-                <span v-html="handFlower()" />
+                <span v-html="ART.hand" />
               </div>
               <div class="letter-body">
                 <p
@@ -679,13 +711,13 @@ onBeforeUnmount(() => {
                 </div>
                 <div class="end-scene svg-slot">
                   <!-- eslint-disable-next-line vue/no-v-html -->
-                  <span v-html="sunflower(92)" />
+                  <span v-html="ART.sunflower" />
                 </div>
                 <div class="end-chars svg-slot">
                   <!-- eslint-disable-next-line vue/no-v-html -->
-                  <span v-html="jay(74, 'r')" />
+                  <span v-html="ART.jayEnd" />
                   <!-- eslint-disable-next-line vue/no-v-html -->
-                  <span v-html="lichi(74, 'l')" />
+                  <span v-html="ART.lichiEnd" />
                 </div>
                 <p class="end-message">
                   {{ t(finalMessage) }}
@@ -700,8 +732,6 @@ onBeforeUnmount(() => {
               </div>
             </template>
           </div>
-
-          <div class="flip-shade" />
         </div>
       </div>
 
@@ -716,10 +746,16 @@ onBeforeUnmount(() => {
       />
 
       <!-- nav hints -->
-      <div class="nav-hint l">
+      <div
+        class="nav-hint l"
+        :class="{ hide: hintHidden }"
+      >
         ‹
       </div>
-      <div class="nav-hint r">
+      <div
+        class="nav-hint r"
+        :class="{ hide: hintHidden }"
+      >
         ›
       </div>
 
@@ -791,10 +827,8 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   justify-content: center;
   padding: 6px 10px;
-  background: rgba(255, 249, 237, 0.72);
+  background: rgba(255, 249, 237, 0.9);
   border-radius: 16px;
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
   box-shadow: 0 2px 8px rgba(61, 43, 31, 0.1);
 }
 .diary-dot {
@@ -852,14 +886,17 @@ onBeforeUnmount(() => {
   background:
     linear-gradient(90deg, rgba(180, 150, 100, 0.18) 0, rgba(180, 150, 100, 0) 6%),
     radial-gradient(140% 120% at 100% 0%, #fffdf6 0%, var(--cream) 40%, var(--paper) 100%);
-  box-shadow: inset 0 0 40px rgba(203, 176, 131, 0.28), 0 20px 44px -18px rgba(61, 43, 31, 0.5);
+  box-shadow: inset 0 0 22px rgba(203, 176, 131, 0.22), 0 12px 26px -16px rgba(61, 43, 31, 0.42);
   overflow: hidden;
   transform-style: preserve-3d;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   transform-origin: left center;
+  /* Only ~3 pages are ever mounted (windowed), so promoting each to its own
+     compositor layer is cheap and lets the turn stay transform-only (no repaint
+     per frame) and avoids a promote-on-flip-start hitch. */
   will-change: transform;
-  transition: transform 0.9s cubic-bezier(0.62, 0.02, 0.34, 1);
+  transition: transform 0.62s cubic-bezier(0.4, 0.02, 0.28, 1);
 }
 .diary-page.no-anim {
   transition: none !important;
@@ -889,20 +926,6 @@ onBeforeUnmount(() => {
   background: linear-gradient(90deg, rgba(120, 92, 50, 0.28), rgba(120, 92, 50, 0));
   pointer-events: none;
   z-index: 4;
-}
-
-.flip-shade {
-  position: absolute;
-  inset: 0;
-  border-radius: 6px 12px 12px 6px;
-  background: linear-gradient(90deg, rgba(61, 43, 31, 0.02), rgba(61, 43, 31, 0.34));
-  opacity: 0;
-  pointer-events: none;
-  z-index: 6;
-  transition: opacity 0.5s ease;
-}
-.diary-page.shading .flip-shade {
-  opacity: 1;
 }
 
 .page-inner {
@@ -1204,28 +1227,26 @@ onBeforeUnmount(() => {
 }
 
 /* ---------- letter ---------- */
-.diary-page.letter .page-inner {
-  background:
-    repeating-linear-gradient(transparent 0 30px, rgba(203, 176, 131, 0.26) 30px 31px);
-  background-position: 0 92px;
-}
 .letter-scene {
   display: flex;
   justify-content: center;
   margin: 4px 0 8px;
   flex: none;
 }
+/* Ruling lives on the body itself and shares the text line-height, so the lines
+   always sit under the writing instead of drifting out of alignment. */
 .letter-body {
   font-family: var(--hand);
   font-size: 16.5px;
-  line-height: 31px;
+  line-height: 30px;
   color: var(--ink);
   flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(transparent 0 29px, rgba(203, 176, 131, 0.26) 29px 30px);
 }
 .letter-body p {
-  margin: 0 0 4px;
+  margin: 0;
   color: var(--ink);
 }
 
@@ -1299,14 +1320,11 @@ onBeforeUnmount(() => {
   color: var(--brown);
   opacity: 0.16;
   pointer-events: none;
-  animation: diary-nudge 2.6s ease-in-out infinite;
+  transition: opacity 0.5s ease;
 }
-.nav-hint.l { left: 4px; --nx: -4px; }
-.nav-hint.r { right: 4px; --nx: 4px; }
-@keyframes diary-nudge {
-  0%, 100% { transform: translateY(-50%) translateX(0); }
-  50% { transform: translateY(-50%) translateX(var(--nx, 4px)); }
-}
+.nav-hint.l { left: 4px; }
+.nav-hint.r { right: 4px; }
+.nav-hint.hide { opacity: 0; }
 
 .float-hint {
   position: absolute;
@@ -1396,8 +1414,5 @@ onBeforeUnmount(() => {
 
 @media (prefers-reduced-motion: reduce) {
   .diary-page { transition: none !important; }
-  .flip-shade { display: none; }
-  .nav-hint,
-  .restart-btn { animation: none; }
 }
 </style>
