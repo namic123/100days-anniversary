@@ -492,246 +492,252 @@ onBeforeUnmount(() => {
           ]"
           :style="{ zIndex: zFor(index) }"
         >
-          <div class="page-inner">
-            <!-- INTRO -->
-            <template v-if="page.section === 'intro'">
-              <div class="intro-block">
-                <div class="eyebrow">
-                  ❤
-                </div>
-                <h2 class="title">
-                  {{ t(introChapterLabel) }}
-                </h2>
-                <div class="rule" />
-                <p class="intro-sub">
-                  {{ t(introSubtext) }}
-                </p>
-                <div class="intro-stats">
-                  <div class="stat">
-                    <span class="stat-num">100</span>
-                    <span class="stat-lbl">DAYS</span>
+          <div class="page-front">
+            <div class="page-inner">
+              <!-- INTRO -->
+              <template v-if="page.section === 'intro'">
+                <div class="intro-block">
+                  <div class="eyebrow">
+                    ❤
                   </div>
-                  <div class="stat">
-                    <span class="stat-num">2</span>
-                    <span class="stat-lbl">COUNTRIES</span>
-                  </div>
-                </div>
-                <div class="intro-scene svg-slot">
-                  <!-- eslint-disable-next-line vue/no-v-html -->
-                  <span v-html="ART.jayIntro" />
-                  <!-- eslint-disable-next-line vue/no-v-html -->
-                  <span v-html="ART.lichiIntro" />
-                </div>
-                <div class="intro-dates">
-                  {{ introDates }}
-                </div>
-              </div>
-            </template>
-
-            <!-- TIMELINE -->
-            <template v-else-if="page.section === 'timeline'">
-              <div class="eyebrow">
-                {{ t(storyChapterLabel) }}
-              </div>
-              <h2 class="title small">
-                {{ t(timelineItem(page).title) }}
-              </h2>
-              <div class="rule" />
-              <div class="tl-entry">
-                <div class="tl-date">
-                  {{ formatDate(timelineItem(page).date) }}
-                </div>
-                <p class="tl-text">
-                  {{ t(timelineItem(page).description) }}
-                </p>
-              </div>
-              <div class="tl-scene svg-slot">
-                <!-- eslint-disable-next-line vue/no-v-html -->
-                <span v-html="ART.call" />
-              </div>
-            </template>
-
-            <!-- MEMORY -->
-            <template v-else-if="page.section === 'memory'">
-              <div class="eyebrow">
-                {{ t(memoryChapterLabel) }}
-              </div>
-              <h2 class="title small">
-                {{ t(memoryItem(page).title) }}
-              </h2>
-              <div class="rule" />
-              <div class="mem-card">
-                <div class="mem-photo">
-                  <svg
-                    width="40"
-                    height="34"
-                    viewBox="0 0 40 34"
-                    fill="none"
-                    aria-hidden="true"
-                  >
-                    <circle
-                      cx="13"
-                      cy="12"
-                      r="5"
-                      fill="rgba(255,255,255,.65)"
-                    />
-                    <path
-                      d="M3 30 L15 17 L23 25 L29 19 L37 30 Z"
-                      fill="rgba(255,255,255,.5)"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <p class="mem-caption">
-                {{ t(memoryItem(page).description) }}
-              </p>
-            </template>
-
-            <!-- KOREA & TAIWAN -->
-            <template v-else-if="page.section === 'korea-taiwan'">
-              <div class="eyebrow">
-                {{ t(ktChapterLabel) }}
-              </div>
-              <template v-if="page.id === 'korea-taiwan-1'">
-                <h2 class="title small">
-                  {{ t(koreaLabel) }} · {{ t(taiwanLabel) }}
-                </h2>
-                <div class="rule" />
-                <div class="map-scene">
-                  <div class="moon-wrap svg-slot">
-                    <!-- eslint-disable-next-line vue/no-v-html -->
-                    <span v-html="ART.moon64" />
-                  </div>
-                  <div class="plane-row svg-slot">
-                    <span class="dist-badge">1,478km ✈</span>
-                    <!-- eslint-disable-next-line vue/no-v-html -->
-                    <span v-html="ART.plane" />
-                  </div>
-                  <div class="lands">
-                    <div class="land">
-                      <div class="svg-slot">
-                        <!-- eslint-disable-next-line vue/no-v-html -->
-                        <span v-html="ART.jayLand" />
-                      </div>
-                      <!-- eslint-disable-next-line vue/no-v-html -->
-                      <span
-                        class="svg-slot"
-                        v-html="ART.landKo"
-                      />
-                      <div class="land-label">
-                        {{ t(koreaLabel) }}
-                      </div>
-                      <div class="land-name">
-                        Jay
-                      </div>
+                  <h2 class="title">
+                    {{ t(introChapterLabel) }}
+                  </h2>
+                  <div class="rule" />
+                  <p class="intro-sub">
+                    {{ t(introSubtext) }}
+                  </p>
+                  <div class="intro-stats">
+                    <div class="stat">
+                      <span class="stat-num">100</span>
+                      <span class="stat-lbl">DAYS</span>
                     </div>
-                    <div class="land">
-                      <div class="svg-slot">
-                        <!-- eslint-disable-next-line vue/no-v-html -->
-                        <span v-html="ART.lichiLand" />
-                      </div>
-                      <!-- eslint-disable-next-line vue/no-v-html -->
-                      <span
-                        class="svg-slot"
-                        v-html="ART.landTw"
-                      />
-                      <div class="land-label">
-                        {{ t(taiwanLabel) }}
-                      </div>
-                      <div class="land-name">
-                        苙綺
-                      </div>
+                    <div class="stat">
+                      <span class="stat-num">2</span>
+                      <span class="stat-lbl">COUNTRIES</span>
                     </div>
+                  </div>
+                  <div class="intro-scene svg-slot">
+                    <!-- eslint-disable-next-line vue/no-v-html -->
+                    <span v-html="ART.jayIntro" />
+                    <!-- eslint-disable-next-line vue/no-v-html -->
+                    <span v-html="ART.lichiIntro" />
+                  </div>
+                  <div class="intro-dates">
+                    {{ introDates }}
                   </div>
                 </div>
               </template>
-              <template v-else>
+
+              <!-- TIMELINE -->
+              <template v-else-if="page.section === 'timeline'">
+                <div class="eyebrow">
+                  {{ t(storyChapterLabel) }}
+                </div>
+                <h2 class="title small">
+                  {{ t(timelineItem(page).title) }}
+                </h2>
                 <div class="rule" />
-                <div class="map-note-scene">
-                  <div class="moon-wrap svg-slot">
-                    <!-- eslint-disable-next-line vue/no-v-html -->
-                    <span v-html="ART.moon58" />
+                <div class="tl-entry">
+                  <div class="tl-date">
+                    {{ formatDate(timelineItem(page).date) }}
                   </div>
-                  <p class="map-note">
-                    {{ t(mapText) }}
+                  <p class="tl-text">
+                    {{ t(timelineItem(page).description) }}
+                  </p>
+                </div>
+                <div class="tl-scene svg-slot">
+                  <!-- eslint-disable-next-line vue/no-v-html -->
+                  <span v-html="ART.call" />
+                </div>
+              </template>
+
+              <!-- MEMORY -->
+              <template v-else-if="page.section === 'memory'">
+                <div class="eyebrow">
+                  {{ t(memoryChapterLabel) }}
+                </div>
+                <h2 class="title small">
+                  {{ t(memoryItem(page).title) }}
+                </h2>
+                <div class="rule" />
+                <div class="mem-card">
+                  <div class="mem-photo">
+                    <svg
+                      width="40"
+                      height="34"
+                      viewBox="0 0 40 34"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <circle
+                        cx="13"
+                        cy="12"
+                        r="5"
+                        fill="rgba(255,255,255,.65)"
+                      />
+                      <path
+                        d="M3 30 L15 17 L23 25 L29 19 L37 30 Z"
+                        fill="rgba(255,255,255,.5)"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <p class="mem-caption">
+                  {{ t(memoryItem(page).description) }}
+                </p>
+              </template>
+
+              <!-- KOREA & TAIWAN -->
+              <template v-else-if="page.section === 'korea-taiwan'">
+                <div class="eyebrow">
+                  {{ t(ktChapterLabel) }}
+                </div>
+                <template v-if="page.id === 'korea-taiwan-1'">
+                  <h2 class="title small">
+                    {{ t(koreaLabel) }} · {{ t(taiwanLabel) }}
+                  </h2>
+                  <div class="rule" />
+                  <div class="map-scene">
+                    <div class="moon-wrap svg-slot">
+                      <!-- eslint-disable-next-line vue/no-v-html -->
+                      <span v-html="ART.moon64" />
+                    </div>
+                    <div class="plane-row svg-slot">
+                      <span class="dist-badge">1,478km ✈</span>
+                      <!-- eslint-disable-next-line vue/no-v-html -->
+                      <span v-html="ART.plane" />
+                    </div>
+                    <div class="lands">
+                      <div class="land">
+                        <div class="svg-slot">
+                          <!-- eslint-disable-next-line vue/no-v-html -->
+                          <span v-html="ART.jayLand" />
+                        </div>
+                        <!-- eslint-disable-next-line vue/no-v-html -->
+                        <span
+                          class="svg-slot"
+                          v-html="ART.landKo"
+                        />
+                        <div class="land-label">
+                          {{ t(koreaLabel) }}
+                        </div>
+                        <div class="land-name">
+                          Jay
+                        </div>
+                      </div>
+                      <div class="land">
+                        <div class="svg-slot">
+                          <!-- eslint-disable-next-line vue/no-v-html -->
+                          <span v-html="ART.lichiLand" />
+                        </div>
+                        <!-- eslint-disable-next-line vue/no-v-html -->
+                        <span
+                          class="svg-slot"
+                          v-html="ART.landTw"
+                        />
+                        <div class="land-label">
+                          {{ t(taiwanLabel) }}
+                        </div>
+                        <div class="land-name">
+                          苙綺
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+                <template v-else>
+                  <div class="rule" />
+                  <div class="map-note-scene">
+                    <div class="moon-wrap svg-slot">
+                      <!-- eslint-disable-next-line vue/no-v-html -->
+                      <span v-html="ART.moon58" />
+                    </div>
+                    <p class="map-note">
+                      {{ t(mapText) }}
+                    </p>
+                  </div>
+                </template>
+              </template>
+
+              <!-- FUTURE -->
+              <template v-else-if="page.section === 'future'">
+                <h2 class="title small">
+                  {{ t(futureChapterLabel) }}
+                </h2>
+                <div class="rule" />
+                <div class="fut-list">
+                  <div
+                    v-for="(wish, wi) in wishesOf(page)"
+                    :key="wish.id"
+                    class="fut-item"
+                    :class="['m' + (wi % 3)]"
+                  >
+                    <span class="fut-check">✿</span>
+                    <span>{{ t(wish.text) }}</span>
+                  </div>
+                </div>
+                <div class="fut-scene svg-slot">
+                  <!-- eslint-disable-next-line vue/no-v-html -->
+                  <span v-html="ART.jayFut" />
+                  <!-- eslint-disable-next-line vue/no-v-html -->
+                  <span v-html="ART.lichiFut" />
+                </div>
+              </template>
+
+              <!-- LETTER -->
+              <template v-else-if="page.section === 'letter'">
+                <div class="eyebrow">
+                  {{ t(letterChapterLabel) }}
+                </div>
+                <div class="letter-scene svg-slot">
+                  <!-- eslint-disable-next-line vue/no-v-html -->
+                  <span v-html="ART.hand" />
+                </div>
+                <div class="letter-body">
+                  <p
+                    v-for="(para, pi) in letterParagraphs(page)"
+                    :key="pi"
+                  >
+                    {{ para }}
                   </p>
                 </div>
               </template>
-            </template>
 
-            <!-- FUTURE -->
-            <template v-else-if="page.section === 'future'">
-              <h2 class="title small">
-                {{ t(futureChapterLabel) }}
-              </h2>
-              <div class="rule" />
-              <div class="fut-list">
-                <div
-                  v-for="(wish, wi) in wishesOf(page)"
-                  :key="wish.id"
-                  class="fut-item"
-                  :class="['m' + (wi % 3)]"
-                >
-                  <span class="fut-check">✿</span>
-                  <span>{{ t(wish.text) }}</span>
+              <!-- ENDING -->
+              <template v-else-if="page.section === 'ending'">
+                <div class="ending-block">
+                  <div class="eyebrow">
+                    {{ t(endingChapterLabel) }}
+                  </div>
+                  <div class="end-scene svg-slot">
+                    <!-- eslint-disable-next-line vue/no-v-html -->
+                    <span v-html="ART.sunflower" />
+                  </div>
+                  <div class="end-chars svg-slot">
+                    <!-- eslint-disable-next-line vue/no-v-html -->
+                    <span v-html="ART.jayEnd" />
+                    <!-- eslint-disable-next-line vue/no-v-html -->
+                    <span v-html="ART.lichiEnd" />
+                  </div>
+                  <p class="end-message">
+                    {{ t(finalMessage) }}
+                  </p>
+                  <button
+                    type="button"
+                    class="restart-btn"
+                    @click="onRestart"
+                  >
+                    {{ t(restartLabel) }} ↺
+                  </button>
                 </div>
-              </div>
-              <div class="fut-scene svg-slot">
-                <!-- eslint-disable-next-line vue/no-v-html -->
-                <span v-html="ART.jayFut" />
-                <!-- eslint-disable-next-line vue/no-v-html -->
-                <span v-html="ART.lichiFut" />
-              </div>
-            </template>
-
-            <!-- LETTER -->
-            <template v-else-if="page.section === 'letter'">
-              <div class="eyebrow">
-                {{ t(letterChapterLabel) }}
-              </div>
-              <div class="letter-scene svg-slot">
-                <!-- eslint-disable-next-line vue/no-v-html -->
-                <span v-html="ART.hand" />
-              </div>
-              <div class="letter-body">
-                <p
-                  v-for="(para, pi) in letterParagraphs(page)"
-                  :key="pi"
-                >
-                  {{ para }}
-                </p>
-              </div>
-            </template>
-
-            <!-- ENDING -->
-            <template v-else-if="page.section === 'ending'">
-              <div class="ending-block">
-                <div class="eyebrow">
-                  {{ t(endingChapterLabel) }}
-                </div>
-                <div class="end-scene svg-slot">
-                  <!-- eslint-disable-next-line vue/no-v-html -->
-                  <span v-html="ART.sunflower" />
-                </div>
-                <div class="end-chars svg-slot">
-                  <!-- eslint-disable-next-line vue/no-v-html -->
-                  <span v-html="ART.jayEnd" />
-                  <!-- eslint-disable-next-line vue/no-v-html -->
-                  <span v-html="ART.lichiEnd" />
-                </div>
-                <p class="end-message">
-                  {{ t(finalMessage) }}
-                </p>
-                <button
-                  type="button"
-                  class="restart-btn"
-                  @click="onRestart"
-                >
-                  {{ t(restartLabel) }} ↺
-                </button>
-              </div>
-            </template>
+              </template>
+            </div>
           </div>
+          <div
+            class="page-back"
+            aria-hidden="true"
+          />
         </div>
       </div>
 
@@ -857,7 +863,8 @@ onBeforeUnmount(() => {
   flex: 1;
   min-height: 0;
   margin-top: 6px;
-  perspective: 1800px;
+  perspective: 1500px;
+  perspective-origin: 50% 45%;
 }
 
 .diary-book {
@@ -879,24 +886,19 @@ onBeforeUnmount(() => {
   z-index: 0;
 }
 
+/* Rotation container only — it carries the transform, its two faces carry the
+   paper. Keeping overflow off the preserve-3d element is what lets the back face
+   render as a real second side (overflow:hidden would flatten it). */
 .diary-page {
   position: absolute;
   inset: 0;
-  border-radius: 6px 12px 12px 6px;
-  background:
-    linear-gradient(90deg, rgba(180, 150, 100, 0.18) 0, rgba(180, 150, 100, 0) 6%),
-    radial-gradient(140% 120% at 100% 0%, #fffdf6 0%, var(--cream) 40%, var(--paper) 100%);
-  box-shadow: inset 0 0 22px rgba(203, 176, 131, 0.22), 0 12px 26px -16px rgba(61, 43, 31, 0.42);
-  overflow: hidden;
   transform-style: preserve-3d;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
   transform-origin: left center;
   /* Only ~3 pages are ever mounted (windowed), so promoting each to its own
      compositor layer is cheap and lets the turn stay transform-only (no repaint
      per frame) and avoids a promote-on-flip-start hitch. */
   will-change: transform;
-  transition: transform 0.62s cubic-bezier(0.4, 0.02, 0.28, 1);
+  transition: transform 0.68s cubic-bezier(0.33, 0, 0.2, 1);
 }
 .diary-page.no-anim {
   transition: none !important;
@@ -904,8 +906,34 @@ onBeforeUnmount(() => {
 .diary-page.flipped {
   transform: rotateY(-180deg);
 }
+
+/* the two physical sides of the leaf */
+.page-front,
+.page-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px 12px 12px 6px;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.page-front {
+  background:
+    linear-gradient(90deg, rgba(180, 150, 100, 0.18) 0, rgba(180, 150, 100, 0) 6%),
+    radial-gradient(140% 120% at 100% 0%, #fffdf6 0%, var(--cream) 40%, var(--paper) 100%);
+  box-shadow: inset 0 0 22px rgba(203, 176, 131, 0.22), 0 12px 26px -16px rgba(61, 43, 31, 0.42);
+}
+/* back of the turning page — plain cream paper, slightly shaded toward the
+   spine so the sheet reads as it swings over instead of vanishing at 90deg */
+.page-back {
+  transform: rotateY(180deg);
+  background:
+    linear-gradient(270deg, rgba(120, 92, 50, 0.22) 0, rgba(120, 92, 50, 0) 22%),
+    radial-gradient(130% 120% at 0% 0%, #fffdf6 0%, var(--cream) 45%, var(--paper) 100%);
+  box-shadow: inset 0 0 22px rgba(203, 176, 131, 0.2);
+}
 /* warm vignette */
-.diary-page::before {
+.page-front::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -916,7 +944,7 @@ onBeforeUnmount(() => {
   z-index: 3;
 }
 /* binding shadow on the left edge */
-.diary-page::after {
+.page-front::after {
   content: "";
   position: absolute;
   left: 0;
