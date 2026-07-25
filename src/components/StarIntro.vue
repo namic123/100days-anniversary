@@ -116,22 +116,14 @@ const goldenDust = Array.from({ length: 14 }, () => ({
   left: Math.random() * 100, top: 55 + Math.random() * 40,
   size: Math.random() * 3 + 2, delay: Math.random() * 8, dur: 7 + Math.random() * 4,
 }))
-const sparkles = Array.from({ length: 12 }, (_, i) => {
-  const a = (i / 12) * Math.PI * 2, r = 40 + Math.random() * 40
-  return { sx: Math.cos(a) * r, sy: Math.sin(a) * r }
-})
 const moonSrc = fauxPhoto(1, 300, 300)
 
 // ---------------- reactive scene state (drives class bindings) --------------
 const stageGolden = ref(false)
 const stageFalling = ref(false)
-const stageReady = ref(false)
 const titleShow = ref(false)
 const fallLineShow = ref(false)
 const promptShow = ref(false)
-const readyShow = ref(false)
-const boxAssembled = ref(false)
-const boxReady = ref(false)
 
 // ---------------- element refs ----------------
 const stageRef = ref<HTMLDivElement>()
@@ -147,7 +139,7 @@ function setStarEl(el: Element | null, i: number) {
 // ---------------- timers / lifecycle guards ----------------
 const timers: number[] = []
 let cancelled = false
-let phase: 'idle' | 'tour' | 'invite' | 'fall' | 'ready' = 'idle'
+let phase: 'idle' | 'tour' | 'invite' | 'fall' = 'idle'
 const meteorEls: HTMLElement[] = []
 
 const wait = (ms: number) => new Promise<void>((r) => { timers.push(window.setTimeout(r, ms)) })
@@ -269,41 +261,32 @@ function triggerFall() {
     at(80 + i * 95 + 1150, () => m.classList.add('converged')) // dot melts into the glow
   })
 
-  // gather into the gift box
-  at(2500, () => { fallLineShow.value = false })
-  at(2600, () => { boxAssembled.value = true }) // body -> ribbon -> bow -> tag -> sparkle
-  at(4400, goReady)
+  // the meteors have gathered into the warm landing glow — hand straight off to
+  // the existing WebGL gift scene (no intermediate box). App swaps to the gift
+  // scene, which fades in warm from the same golden-hour glow.
+  at(2400, () => { fallLineShow.value = false })
+  at(2900, finish)
 }
 
-function goReady() {
-  phase = 'ready'
-  stageReady.value = true
-  boxReady.value = true
-  readyShow.value = true
-}
-
-// static golden-hour READY state (reduced motion)
+// reduced motion: skip the tour/meteor animation. Show the whole constellation
+// at rest with the tap prompt; a tap (or a short fallback) hands off to the
+// gift scene.
 function endStatic() {
   cancelled = false
-  const uni = universeRef.value
-  const linesSvg = linesRef.value
-  if (uni) { uni.style.transition = 'none'; uni.style.opacity = '0' }
-  if (linesSvg) linesSvg.style.opacity = '0'
-  stageGolden.value = true
-  stageReady.value = true
-  boxAssembled.value = true
-  boxReady.value = true
+  stars.forEach((s) => { s.lit = true })
+  lines.forEach((l) => { l.drawn = true })
+  panTo(360, 580, 0.55)
   titleShow.value = false
-  promptShow.value = false
   fallLineShow.value = false
-  readyShow.value = true
-  phase = 'ready'
+  promptShow.value = true
+  phase = 'invite'
+  at(6000, finish)
 }
 
 // ---------------- interactions ----------------
 function onStageClick() {
+  if (reduced) { finish(); return }
   if (phase === 'invite') triggerFall()
-  else if (phase === 'ready') finish()
 }
 function onSkip() {
   finish()
@@ -326,7 +309,7 @@ onBeforeUnmount(() => {
   <div
     ref="stageRef"
     class="su-stage"
-    :class="{ golden: stageGolden, falling: stageFalling, ready: stageReady }"
+    :class="{ golden: stageGolden, falling: stageFalling }"
     @click="onStageClick"
   >
     <!-- background layers (night -> golden hour cross-fade) -->
@@ -459,43 +442,6 @@ onBeforeUnmount(() => {
       aria-hidden="true"
     />
 
-    <!-- gift box (matches the site's gift scene) -->
-    <div
-      class="su-box"
-      :class="{ assembled: boxAssembled, ready: boxReady }"
-      aria-hidden="true"
-    >
-      <div class="su-contact" />
-      <div class="su-top" />
-      <div class="su-front" />
-      <div class="su-ribbon su-r-top" />
-      <div class="su-ribbon su-r-v" />
-      <div class="su-ribbon su-r-h" />
-      <div class="su-shimmer" />
-      <div class="su-bow">
-        <div class="su-bow-loop l" />
-        <div class="su-bow-loop r" />
-        <div class="su-bow-knot" />
-      </div>
-      <div class="su-tag">
-        <div class="su-string" />
-        <div class="su-card2">
-          {{ L(uiText.nameTag) }}
-        </div>
-      </div>
-    </div>
-    <div
-      class="su-sparkle"
-      :class="{ show: boxAssembled }"
-      aria-hidden="true"
-    >
-      <span
-        v-for="(sp, i) in sparkles"
-        :key="i"
-        :style="{ '--sx': sp.sx + 'px', '--sy': sp.sy + 'px' }"
-      />
-    </div>
-
     <!-- copy overlays -->
     <div
       class="su-title"
@@ -540,16 +486,6 @@ onBeforeUnmount(() => {
       </div>
       <div class="su-ptext">
         {{ L(starIntro.tapPrompt) }}
-      </div>
-    </div>
-
-    <div
-      class="su-readyp"
-      :class="{ show: readyShow }"
-      aria-hidden="true"
-    >
-      <div class="su-rmain">
-        {{ L(uiText.tapToOpen) }}
       </div>
     </div>
 
