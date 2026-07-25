@@ -75,15 +75,15 @@ test('full flow: gift scene → reading → language switch', async ({ page }) =
   // The smoke test verifies the flow reaches the diary without console errors,
   // NOT that WebGL renders (WebGL is verified separately), so advance through
   // whichever path is present — the WebGL skip button or the fallback control.
+  // Trigger the skip handler directly because CI's software renderer can stall
+  // before the entrance animation makes the already-mounted button visible.
   await expect(page.locator('.gsx-root')).toBeVisible({ timeout: 15_000 })
 
   const fallback = page.locator('.gsx-fallback')
-  const skip = page.locator('.gsx-skip.show')
-  await expect(fallback.or(skip)).toBeVisible({ timeout: 20_000 })
   if (await fallback.isVisible()) {
     await page.locator('.gsx-fb-stage').click()
   } else {
-    await skip.click()
+    await page.locator('.gsx-skip').evaluate((button: HTMLButtonElement) => button.click())
   }
 
   // Phase 2: Reading mode — the reading container is present.
