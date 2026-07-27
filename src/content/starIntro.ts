@@ -27,11 +27,6 @@ export const starIntro: Record<string, LocalizedText> = {
     ko: '우리의 첫 100일, 축하해!',
     en: 'Happy first 100 days!',
   },
-  celebrateSub: {
-    'zh-TW': '在兩個不同的國家，用同一份心',
-    ko: '서로 다른 두 나라에서, 같은 마음으로',
-    en: 'From two countries, with one heart',
-  },
   giftDropPrompt: {
     'zh-TW': '輕觸畫面，禮物就會送到',
     ko: '화면을 탭하면 선물이 도착해요',

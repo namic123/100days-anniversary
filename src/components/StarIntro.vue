@@ -812,9 +812,6 @@ onBeforeUnmount(() => {
       <div class="su-fhead">
         {{ L(starIntro.celebrateTitle) }}
       </div>
-      <div class="su-fsub">
-        {{ L(starIntro.celebrateSub) }}
-      </div>
       <div class="su-names">
         Jay&nbsp;·&nbsp;苙綺&nbsp;·&nbsp;2026.04.28 → 2026.08.05
       </div>

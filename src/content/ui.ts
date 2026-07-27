@@ -17,9 +17,9 @@ export const uiText: Record<string, LocalizedText> = {
     en: 'Read Again',
   },
   giftMessage: {
-    'zh-TW': '苙綺，我為妳準備了一份小小的禮物。',
-    ko: '苙綺, 너를 위해 준비한 작은 선물이 있어.',
-    en: 'Lichi, I prepared a little gift for you.',
+    'zh-TW': '苙綺，我把我們的故事裝進了這裡面。',
+    ko: '苙綺, 이 안에 우리 이야기를 담아봤어.',
+    en: 'Lichi, I put our story inside this.',
   },
   tapToOpen: {
     'zh-TW': '輕輕點一下禮物盒',
