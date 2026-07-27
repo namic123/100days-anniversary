@@ -8,14 +8,14 @@ import type { LocalizedText } from './localization'
 
 export const starIntro: Record<string, LocalizedText> = {
   eyebrow: {
-    'zh-TW': '在同一片天空下',
-    ko: '같은 하늘 아래',
-    en: 'Under the same sky',
+    'zh-TW': '像偶然般開始的我們',
+    ko: '우연처럼 시작된 우리가',
+    en: 'We who began by chance,',
   },
   title: {
-    'zh-TW': '我們的回憶\n化作星星閃爍',
-    ko: '우리의 기억이\n별이 되어 반짝였어',
-    en: 'Our memories\nbecame shining stars',
+    'zh-TW': '直到成為彼此\n最珍貴的每一天',
+    ko: '서로의 가장 소중한\n하루가 되기까지',
+    en: "until we became each other's\nmost precious day",
   },
   tapPrompt: {
     'zh-TW': '輕觸畫面，一起慶祝100天',
