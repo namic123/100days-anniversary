@@ -2,22 +2,56 @@
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { getLocalizedText, type Locale, type LocalizedText } from '@/content/localization'
 import { starIntro } from '@/content/starIntro'
+import {
+  starIntroPhotoSlots,
+  starIntroVideoSlot,
+  type StarIntroCaption,
+} from '@/content/starIntroMedia'
 import { uiText } from '@/content/ui'
 
-// Constellation tour → meteor shower → cream gift box, ported from
-// design-lab/constellation-lab/11-tour-to-giftbox.html to a Vue SFC.
+// Constellation tour → grand fireworks → star-drop gift box, ported from
+// design-lab/grand-celebration-lab/03-grand-heart-classic.html (which derives
+// its box + golden-hour landing from constellation-lab/11-tour-to-giftbox.html).
 //
-// Flow: (1) full constellation tour (establishing wide shot + title, camera
-// pans through 4 clusters blooming photo-stars + drawing lines, then pulls out
-// to reveal the whole constellation); (2) a tap prompt; (3) on tap the whole
-// constellation falls as a meteor shower while night → golden-hour; (4) the
-// stardust forms a cream gift box under a god-ray, then "tap to open".
+// Flow:
+//   Phase 1 (tour, unchanged) — full constellation tour: establishing wide
+//     shot + title, camera pans through 4 clusters blooming photo-stars and
+//     drawing lines, then pulls out to reveal the whole constellation.
+//   Phase 2 (invite) — a tap prompt; the tap starts the CELEBRATION.
+//   Phase A (fireworks) — a canvas particle engine plays waves of classic
+//     multi-ring + heart bursts building to a dual finale (giant heart + full
+//     -sky barrage + screen flash) over the dimmed night sky, then resolves a
+//     celebration message (gold 100 hero + title + sub + footer).
+//   Phase B (star → box → meteor → golden) — one bright star flares, morphs
+//     into a compact gift-box "meteor" and plummets on an eased arc while the
+//     sky cross-fades night → golden hour; on impact a warm flash + spark ring
+//     lands the full cream gift box under the god-ray.
+//   Handoff — ~900ms after the box settles it auto-finishes (emits `completed`)
+//     so the App swaps to the real WebGL gift scene, which fades in from the
+//     same golden hour.
 //
 // All copy renders live from L() so switching language mid-intro updates
-// everything (title, prompt, star captions, name tag, skip, ready prompt).
+// everything (title, prompts, celebration message, star captions, name tag).
 
 const props = defineProps<{ locale: Locale }>()
 const emit = defineEmits<{ completed: [] }>()
+
+const importedPhotos = import.meta.glob<string>(
+  '/src/assets/intro-media/photos/*.webp',
+  { eager: true, import: 'default', query: '?url' },
+)
+const importedVideos = import.meta.glob<string>(
+  '/src/assets/intro-media/video/*.mp4',
+  { eager: true, import: 'default', query: '?url' },
+)
+
+function importedMediaUrl(
+  modules: Record<string, string>,
+  fileName: string,
+): string | null {
+  const entry = Object.entries(modules).find(([path]) => path.endsWith(`/${fileName}`))
+  return entry?.[1] ?? null
+}
 
 function L(text: LocalizedText): string {
   return getLocalizedText(text, props.locale)
@@ -62,25 +96,33 @@ function fauxPhoto(seed = 0, w = 300, h = 400): string {
 }
 
 // ---------------- constellation data (verbatim from mockup) -----------------
-// A star's caption is a literal string (dates / distance) OR a LocalizedText
-// key from starIntro (rendered live via L). Empty caption = no label.
-type StarCap = string | LocalizedText | null
-interface RawStar { x: number; y: number; seed: number; cap: StarCap }
+interface StarPosition { x: number; y: number }
+interface RawStar extends StarPosition {
+  seed: number
+  cap: StarIntroCaption
+  fileName: string
+}
 
-const rawStars: RawStar[] = [
-  { x: 170, y: 250, seed: 0, cap: '2026.04.28' },
-  { x: 270, y: 340, seed: 1, cap: null },
-  { x: 190, y: 440, seed: 2, cap: starIntro.capFirstMeeting },
-  { x: 540, y: 320, seed: 3, cap: null },
-  { x: 620, y: 420, seed: 4, cap: '2026.05.11' },
-  { x: 555, y: 520, seed: 5, cap: starIntro.capVideoCall },
-  { x: 360, y: 640, seed: 6, cap: starIntro.capSameSky },
-  { x: 220, y: 840, seed: 7, cap: null },
-  { x: 320, y: 920, seed: 8, cap: starIntro.capInTaiwan },
-  { x: 180, y: 980, seed: 9, cap: null },
-  { x: 480, y: 880, seed: 10, cap: '1,478km' },
-  { x: 570, y: 970, seed: 11, cap: null },
+const starPositions: StarPosition[] = [
+  { x: 170, y: 250 },
+  { x: 270, y: 340 },
+  { x: 190, y: 440 },
+  { x: 540, y: 320 },
+  { x: 620, y: 420 },
+  { x: 555, y: 520 },
+  { x: 360, y: 640 },
+  { x: 220, y: 840 },
+  { x: 320, y: 920 },
+  { x: 180, y: 980 },
+  { x: 480, y: 880 },
+  { x: 570, y: 970 },
 ]
+const rawStars: RawStar[] = starPositions.map((position, index) => ({
+  ...position,
+  seed: index,
+  cap: starIntroPhotoSlots[index].caption,
+  fileName: starIntroPhotoSlots[index].fileName,
+}))
 const clusters = [
   { ids: [0, 1, 2], fx: 210, fy: 350, s: 1.14 },
   { ids: [3, 4, 5], fx: 575, fy: 420, s: 1.14 },
@@ -91,7 +133,20 @@ const edges = [[0, 1], [1, 2], [3, 4], [4, 5], [7, 8], [8, 9], [10, 11], [6, 3],
 
 // Reactive star list (lit flag drives the bloom); src precomputed once.
 const stars = reactive(
-  rawStars.map(s => ({ x: s.x, y: s.y, cap: s.cap, src: fauxPhoto(s.seed, 180, 228), lit: false })),
+  rawStars.map((s) => {
+    const placeholderSrc = fauxPhoto(s.seed, 180, 228)
+    const customSrc = importedMediaUrl(importedPhotos, s.fileName)
+    return {
+      x: s.x,
+      y: s.y,
+      cap: s.cap,
+      fileName: s.fileName,
+      src: customSrc ?? placeholderSrc,
+      placeholderSrc,
+      hasCustomMedia: Boolean(customSrc),
+      lit: false,
+    }
+  }),
 )
 // Reactive line list (drawn flag drives the stroke-dashoffset draw-on).
 const lines = reactive(
@@ -102,9 +157,20 @@ const lines = reactive(
 )
 
 // caption text — literal string passes through, LocalizedText goes through L()
-function capText(cap: StarCap): string {
+function capText(cap: StarIntroCaption): string {
   if (!cap) return ''
   return typeof cap === 'string' ? cap : L(cap)
+}
+
+function photoAlt(cap: StarIntroCaption): string {
+  const caption = capText(cap)
+  return caption ? `${L(starIntro.photoAlt)}: ${caption}` : L(starIntro.photoAlt)
+}
+
+function restorePhotoPlaceholder(index: number) {
+  const star = stars[index]
+  star.src = star.placeholderSrc
+  star.hasCustomMedia = false
 }
 
 // ---------------- decorative particle fields (generated once) ---------------
@@ -116,31 +182,36 @@ const goldenDust = Array.from({ length: 14 }, () => ({
   left: Math.random() * 100, top: 55 + Math.random() * 40,
   size: Math.random() * 3 + 2, delay: Math.random() * 8, dur: 7 + Math.random() * 4,
 }))
-const moonSrc = fauxPhoto(1, 300, 300)
+const moonPlaceholderSrc = fauxPhoto(1, 300, 300)
+const moonVideoSrc = ref<string | null>(
+  importedMediaUrl(importedVideos, starIntroVideoSlot.fileName),
+)
+
+function restoreVideoPlaceholder() {
+  moonVideoSrc.value = null
+}
 
 // ---------------- reactive scene state (drives class bindings) --------------
-const stageGolden = ref(false)
-const stageFalling = ref(false)
-const titleShow = ref(false)
-const fallLineShow = ref(false)
-const promptShow = ref(false)
+const stageGolden = ref(false)      // night -> golden-hour cross-fade
+const stageFalling = ref(false)     // landing glow at the impact point
+const universeDim = ref(false)      // dim the tour constellation to a faint remnant
+const titleShow = ref(false)        // tour title
+const promptShow = ref(false)       // phase 2 "tap to celebrate" prompt
+const prompt2Show = ref(false)      // "tap and your gift arrives" prompt
+const msgShow = ref(false)          // celebration message (100 hero)
+const boxAssembled = ref(false)     // the landed gift box assembles
 
 // ---------------- element refs ----------------
 const stageRef = ref<HTMLDivElement>()
 const universeRef = ref<HTMLDivElement>()
-const linesRef = ref<SVGSVGElement>()
-const meteorLayerRef = ref<HTMLDivElement>()
-const moonRef = ref<HTMLDivElement>()
-const starEls: HTMLElement[] = []
-function setStarEl(el: Element | null, i: number) {
-  if (el) starEls[i] = el as HTMLElement
-}
+const fxRef = ref<HTMLCanvasElement>()
+const flashRef = ref<HTMLDivElement>()
 
 // ---------------- timers / lifecycle guards ----------------
 const timers: number[] = []
 let cancelled = false
-let phase: 'idle' | 'tour' | 'invite' | 'fall' = 'idle'
-const meteorEls: HTMLElement[] = []
+type Phase = 'idle' | 'tour' | 'invite' | 'aFire' | 'message' | 'bFall' | 'impact' | 'ready'
+let phase: Phase = 'idle'
 
 const wait = (ms: number) => new Promise<void>((r) => { timers.push(window.setTimeout(r, ms)) })
 const at = (ms: number, fn: () => void) => { timers.push(window.setTimeout(() => { if (!cancelled) fn() }, ms)) }
@@ -152,6 +223,7 @@ function finish() {
   completedEmitted = true
   cancelled = true
   clearTimers()
+  stopLoop()
   emit('completed')
 }
 
@@ -167,7 +239,7 @@ function drawEdgesFor(litIds: number[]) {
   lines.forEach((l) => { if (litIds.includes(l.a) && litIds.includes(l.b)) l.drawn = true })
 }
 
-// ===== PHASE 1 + 2 — the COMPLETE tour, then invite the tap =====
+// ===== PHASE 1 + 2 — the COMPLETE tour, then invite the tap (unchanged) =====
 async function run() {
   cancelled = false
   phase = 'tour'
@@ -200,99 +272,339 @@ async function run() {
   await wait(800); if (cancelled) return
   phase = 'invite'
   promptShow.value = true
-  // auto-fallback if no tap within 7s
-  at(7000, () => { if (phase === 'invite') triggerFall() })
+  // auto-fallback if no tap within 7s: begin the celebration anyway
+  at(7000, () => { if (phase === 'invite') beginA() })
 }
 
-// ===== PHASE 3 + 4 — meteor handoff then gift box =====
-const LX = 0.5, LY = 0.62 // shared landing point (fraction of stage)
+// ============================================================================
+// Canvas fireworks + gift-meteor engine (ported from mockup 03)
+// ============================================================================
+const LX = 0.5, LY = 0.62 // shared landing point (fraction of stage) — box + glow
 
-function triggerFall() {
-  if (phase !== 'invite') return
-  phase = 'fall'
-  promptShow.value = false
+interface Particle {
+  x: number; y: number; vx: number; vy: number; drag: number; grav: number
+  size: number; life: number; decay: number; color: string; isFlash?: boolean
+}
+interface Rocket {
+  x: number; y: number; tx: number; ty: number; reach: number; cols: string[]
+  type: 'ring' | 'heart'; big: boolean; vx: number; vy: number; trail: string
+}
+interface Meteor {
+  sx: number; sy: number; lx: number; ly: number; x: number; y: number
+  start: number; dur: number; rot: number; scale: number; bow: number
+  emit: number; done: boolean
+}
 
-  const stage = stageRef.value
-  const uni = universeRef.value
-  const linesSvg = linesRef.value
-  const meteorLayer = meteorLayerRef.value
-  if (!stage || !uni || !linesSvg || !meteorLayer) return
+let ctx: CanvasRenderingContext2D | null = null
+let W = 0, H = 0, DPR = 1
+const CSTAR = { x: 0, y: 0, on: false } // the bright celebration star (Phase B seed)
 
-  // COORDINATE HANDOFF: snapshot each tour tile's on-screen center vs #stage
-  const sr = stage.getBoundingClientRect()
-  const W = sr.width, H = sr.height
-  const LXp = LX * W, LYp = LY * H
-  const tiles = [...starEls]
-  if (moonRef.value) tiles.push(moonRef.value)
-  const snaps = tiles.map((el) => {
-    const r = el.getBoundingClientRect()
-    return { x: r.left + r.width / 2 - sr.left, y: r.top + r.height / 2 - sr.top }
-  })
+function resize() {
+  const canvas = fxRef.value, stage = stageRef.value
+  if (!canvas || !stage) return
+  if (!ctx) ctx = canvas.getContext('2d')
+  DPR = Math.min(window.devicePixelRatio || 1, 2)
+  W = stage.clientWidth; H = stage.clientHeight
+  canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR)
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px'
+  ctx?.setTransform(DPR, 0, 0, DPR, 0, 0)
+  CSTAR.x = W * 0.30; CSTAR.y = H * 0.155
+}
 
-  // fade the constellation lines and hide the transformed universe
-  linesSvg.style.opacity = '0'
-  uni.style.opacity = '0'
+// cached radial-glow sprites (additive; no per-particle gradients)
+const sprites: Record<string, HTMLCanvasElement> = {}
+function sprite(color: string): HTMLCanvasElement {
+  const cached = sprites[color]
+  if (cached) return cached
+  const c = document.createElement('canvas'); c.width = c.height = 32
+  const g = c.getContext('2d')
+  if (g) {
+    const rg = g.createRadialGradient(16, 16, 0, 16, 16, 16)
+    rg.addColorStop(0, color); rg.addColorStop(.35, color); rg.addColorStop(1, 'rgba(0,0,0,0)')
+    g.fillStyle = rg; g.beginPath(); g.arc(16, 16, 16, 0, 7); g.fill()
+  }
+  sprites[color] = c; return c
+}
+const GOLD = ['#f4be3a', '#ffd77a', '#ffb85c']
+const ROSE = ['#ff6f91', '#f0907a', '#ffb0a0']
+const ROSEGOLD = ['#ff8fa3', '#f4be3a', '#ffd77a']
+const MIX = ['#ff6f91', '#f4be3a', '#ffb85c', '#fff3d0']
+const VIOLETMIX = ['#b79cf0', '#f4be3a', '#fff3d0']
+const TEALMIX = ['#8fe3d8', '#ffd77a', '#fff3d0']
+const WHITE = ['#fff3d0', '#fff9ed']
+const TRAIL = ['#ffd77a', '#f4be3a', '#ffb85c', '#fff3d0']
 
-  // night -> golden hour, grow the landing glow, fade dust/horizon
+const particles: Particle[] = []
+let rockets: Rocket[] = []
+const MAX = 880
+
+function heartXY(t: number): [number, number] {
+  const x = 16 * Math.pow(Math.sin(t), 3)
+  const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t))
+  return [x, y]
+}
+function heartBurst(cx: number, cy: number, reach: number, colors: string[], count: number) {
+  const drag = 0.915, k = reach / 16 * (1 - drag)
+  for (let i = 0; i < count && particles.length < MAX; i++) {
+    const t = (i / count) * Math.PI * 2 + Math.random() * 0.05, [hx, hy] = heartXY(t), j = 0.9 + Math.random() * 0.2
+    particles.push({ x: cx, y: cy, vx: hx * k * j, vy: hy * k * j, drag, grav: 0.035, size: 3.0 + Math.random() * 2.2,
+      life: 1, decay: 0.007 + Math.random() * 0.006, color: colors[(Math.random() * colors.length) | 0] })
+  }
+  for (let i = 0; i < count * 0.22 && particles.length < MAX; i++) {
+    const a = Math.random() * Math.PI * 2, sp = reach * 0.045 * (0.4 + Math.random())
+    particles.push({ x: cx, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, drag: 0.9, grav: 0.045,
+      size: 2 + Math.random() * 1.6, life: 1, decay: 0.016 + Math.random() * 0.01, color: colors[(Math.random() * colors.length) | 0] })
+  }
+}
+// classic multi-ring burst
+function ringBurst(cx: number, cy: number, reach: number, colors: string[], big = false) {
+  const rings = big ? 3 : 2
+  for (let r = 0; r < rings; r++) {
+    const count = big ? (50 - r * 10) : (30 - r * 8), sm = 1 - r * 0.26
+    for (let i = 0; i < count && particles.length < MAX; i++) {
+      const a = (i / count) * Math.PI * 2 + Math.random() * 0.05 + r * 0.12, sp = reach * 0.05 * sm * (0.88 + Math.random() * 0.24)
+      particles.push({ x: cx, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, drag: 0.9, grav: 0.03,
+        size: 2.6 + Math.random() * 1.7, life: 1, decay: 0.006 + Math.random() * 0.006, color: colors[(Math.random() * colors.length) | 0] })
+    }
+  }
+  for (let i = 0; i < (big ? 24 : 12) && particles.length < MAX; i++) {
+    const a = Math.random() * Math.PI * 2, sp = reach * 0.03 * (0.4 + Math.random())
+    particles.push({ x: cx, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, drag: 0.88, grav: 0.05,
+      size: 1.6 + Math.random() * 1.2, life: 1, decay: 0.02 + Math.random() * 0.012, color: WHITE[(Math.random() * WHITE.length) | 0] })
+  }
+}
+function flashP(cx: number, cy: number, r: number, color: string) {
+  particles.push({ x: cx, y: cy, vx: 0, vy: 0, drag: 1, grav: 0, size: r, life: 1, decay: 0.05, color, isFlash: true })
+}
+function screenFlash(op: number) {
+  const f = flashRef.value; if (!f) return
+  f.style.transition = 'none'; f.style.opacity = String(op)
+  requestAnimationFrame(() => { f.style.transition = 'opacity .75s ease'; f.style.opacity = '0' })
+}
+
+// ---- rockets ----
+function launch(tx: number, ty: number, reach: number, cols: string[], type: 'ring' | 'heart', big = false) {
+  const sx = W * (0.30 + Math.random() * 0.40)
+  rockets.push({ x: sx, y: H * 1.02, tx, ty, reach, cols, type, big,
+    vx: (tx - sx) * 0.012, vy: -(Math.sqrt(Math.max(1, H * 1.02 - ty)) * 0.9 + 7) * 0.5, trail: cols[1] || cols[0] })
+}
+function stepRocket(r: Rocket): boolean {
+  const g = ctx; if (!g) return false
+  r.vy += 0.12; r.x += r.vx; r.y += r.vy
+  const s = sprite(r.trail)
+  g.globalAlpha = 0.9; g.drawImage(s, r.x - 7, r.y - 7, 14, 14)
+  g.globalAlpha = 0.35; g.drawImage(s, r.x - r.vx - 5, r.y - r.vy - 5, 10, 10)
+  if (r.y <= r.ty || r.vy >= 0) {
+    if (r.type === 'heart') heartBurst(r.x, r.y, r.reach, r.cols, r.big ? 128 : 74)
+    else ringBurst(r.x, r.y, r.reach, r.cols, r.big)
+    flashP(r.x, r.y, r.big ? r.reach * 1.15 : r.reach * 0.7, '#fff3d0')
+    return false
+  }
+  return true
+}
+
+// ---- gift-box meteor (Phase B) ----
+let meteor: Meteor | null = null
+function roundRectPath(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  const rr = Math.min(r, w / 2, h / 2)
+  g.beginPath()
+  g.moveTo(x + rr, y)
+  g.arcTo(x + w, y, x + w, y + h, rr)
+  g.arcTo(x + w, y + h, x, y + h, rr)
+  g.arcTo(x, y + h, x, y, rr)
+  g.arcTo(x, y, x + w, y, rr)
+  g.closePath()
+}
+function drawMiniBox(x: number, y: number, s: number, rot: number) {
+  const g = ctx; if (!g) return
+  g.save(); g.translate(x, y); g.rotate(rot)
+  const w = 20 * s, h = 17 * s
+  g.fillStyle = '#fff4d8'
+  roundRectPath(g, -w / 2, -h / 2, w, h, 3 * s); g.fill()
+  g.fillStyle = '#fff9ed'
+  roundRectPath(g, -w / 2 - 1.5 * s, -h / 2 - 4.5 * s, w + 3 * s, 6 * s, 2 * s); g.fill()
+  g.fillStyle = '#e8be4e'
+  g.fillRect(-2.4 * s, -h / 2 - 4.5 * s, 4.8 * s, h + 4.5 * s)
+  g.fillRect(-w / 2, -2.2 * s, w, 4.4 * s)
+  g.restore()
+}
+function updateMeteor(now: number, dt: number) {
+  const m = meteor; if (!m) return
+  const g = ctx; if (!g) return
+  if (!m.start) m.start = now
+  const p = Math.min((now - m.start) / m.dur, 1), ez = p * p
+  m.x = m.sx + (m.lx - m.sx) * (p * 0.55 + ez * 0.45) + Math.sin(p * Math.PI) * m.bow
+  m.y = m.sy + (m.ly - m.sy) * ez
+  m.rot += dt * 0.006; m.scale = 1 - p * 0.12
+  m.emit += dt
+  while (m.emit > 15) {
+    m.emit -= 15
+    for (let k = 0; k < 2 && particles.length < MAX; k++) {
+      const ang = Math.random() * 6.283
+      particles.push({ x: m.x + (Math.random() * 6 - 3), y: m.y + (Math.random() * 6 - 3),
+        vx: Math.cos(ang) * 0.5, vy: Math.sin(ang) * 0.5 - 0.3, drag: 0.9, grav: 0.02,
+        size: 2.2 + Math.random() * 1.7, life: 1, decay: 0.024 + Math.random() * 0.02, color: TRAIL[(Math.random() * TRAIL.length) | 0] })
+    }
+  }
+  // hot head glow (additive)
+  let s = sprite('#fff3d0'), d = 28 * m.scale; g.globalAlpha = 0.95; g.drawImage(s, m.x - d / 2, m.y - d / 2, d, d)
+  s = sprite('#f4be3a'); d = 46 * m.scale; g.globalAlpha = 0.5; g.drawImage(s, m.x - d / 2, m.y - d / 2, d, d)
+  g.globalAlpha = 1
+  if (p >= 1 && !m.done) { m.done = true; impact() }
+}
+function impact() {
+  phase = 'impact'
+  screenFlash(0.72)
+  ringBurst(W * LX, H * LY, 78, ['#ffe6b0', '#f4be3a', '#ffb85c', '#fff3d0'], true)
+  flashP(W * LX, H * LY, 120, '#fff3d0')
+  meteor = null
   stageFalling.value = true
-  at(300, () => { stageGolden.value = true })
-  at(500, () => { fallLineShow.value = true })
-
-  // spawn stage-level meteors at the snapshotted positions and streak them down
-  snaps.forEach((p, i) => {
-    const m = document.createElement('div'); m.className = 'su-meteor'
-    m.style.left = p.x + 'px'; m.style.top = p.y + 'px'
-    const trail = document.createElement('div'); trail.className = 'su-trail'
-    const dot = document.createElement('div'); dot.className = 'su-mdot'
-    m.appendChild(trail); m.appendChild(dot)
-    meteorLayer.appendChild(m); meteorEls.push(m)
-
-    const dx = LXp - p.x, dy = LYp - p.y
-    const dist = Math.hypot(dx, dy)
-    const backAng = Math.atan2(-dy, -dx) * 180 / Math.PI
-    const tlen = Math.min(150, dist * 0.5)
-    at(80 + i * 95, () => {
-      trail.style.width = tlen + 'px'
-      trail.style.transform = `rotate(${backAng}deg)`
-      m.classList.add('fall')
-      m.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.4)`
-    })
-    at(80 + i * 95 + 1000, () => m.classList.add('arrived')) // trail fades on arrival
-    at(80 + i * 95 + 1150, () => m.classList.add('converged')) // dot melts into the glow
-  })
-
-  // the meteors have gathered into the warm landing glow — hand straight off to
-  // the existing WebGL gift scene (no intermediate box). App swaps to the gift
-  // scene, which fades in warm from the same golden-hour glow.
-  at(2400, () => { fallLineShow.value = false })
-  at(2900, finish)
+  at(140, () => { boxAssembled.value = true })
+  // box has landed & settled (~900ms) — hand straight off to the WebGL gift
+  // scene, which fades in from the same golden hour.
+  at(1040, finish)
 }
 
-// reduced motion: skip the tour/meteor animation. Show the whole constellation
-// at rest with the tap prompt; a tap (or a short fallback) hands off to the
-// gift scene.
+function drawStar(now: number) {
+  const g = ctx; if (!g) return
+  const tw = 0.55 + 0.45 * Math.sin(now / 300)
+  let s = sprite('#fff3d0'), d = 12 * tw + 10; g.globalAlpha = 0.9 * tw; g.drawImage(s, CSTAR.x - d / 2, CSTAR.y - d / 2, d, d)
+  s = sprite('#f4be3a'); d = 28; g.globalAlpha = 0.4 * tw; g.drawImage(s, CSTAR.x - d / 2, CSTAR.y - d / 2, d, d)
+  g.globalAlpha = 1
+}
+
+// ---- main loop ----
+let raf = 0, last = 0, running = false
+function step(now: number) {
+  if (!running) return
+  const g = ctx; if (!g) { running = false; return }
+  if (!last) last = now
+  let dt = now - last; last = now; if (dt > 50) dt = 50
+
+  g.globalCompositeOperation = 'destination-out'
+  g.globalAlpha = 1; g.fillStyle = 'rgba(0,0,0,0.22)'; g.fillRect(0, 0, W, H)
+
+  g.globalCompositeOperation = 'lighter'
+  rockets = rockets.filter(stepRocket)
+  if (CSTAR.on && !meteor) drawStar(now)
+  if (meteor) updateMeteor(now, dt)
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i]
+    if (p.isFlash) {
+      p.life -= p.decay; p.size *= 1.12
+      if (p.life <= 0) { particles.splice(i, 1); continue }
+      g.globalAlpha = p.life * 0.5; const s = sprite(p.color); g.drawImage(s, p.x - p.size, p.y - p.size, p.size * 2, p.size * 2); continue
+    }
+    p.vx *= p.drag; p.vy = p.vy * p.drag + p.grav; p.x += p.vx; p.y += p.vy; p.life -= p.decay
+    if (p.life <= 0) { particles.splice(i, 1); continue }
+    g.globalAlpha = Math.max(0, p.life); const s = sprite(p.color); const d = p.size * 2 * (0.6 + p.life * 0.6)
+    g.drawImage(s, p.x - d / 2, p.y - d / 2, d, d)
+  }
+  g.globalAlpha = 1
+  if (meteor) { g.globalCompositeOperation = 'source-over'; drawMiniBox(meteor.x, meteor.y, meteor.scale, meteor.rot) }
+  g.globalCompositeOperation = 'source-over'
+  raf = requestAnimationFrame(step)
+}
+function startLoop() { if (!running) { running = true; last = 0; raf = requestAnimationFrame(step) } }
+function stopLoop() { running = false; if (raf) cancelAnimationFrame(raf); raf = 0 }
+
+// ============================================================================
+// Sequence — Phase A (fireworks) → message → Phase B (star → box → golden)
+// ============================================================================
+function beginA() {
+  if (phase !== 'invite') return
+  phase = 'aFire'
+  promptShow.value = false
+  universeDim.value = true // dim the tour constellation to a faint remnant
+  startLoop()
+  fireSequenceA()
+}
+
+function fireSequenceA() {
+  const cl = (x: number, y: number, r: number, c: string[], big = false) => launch(x * W, y * H, r, c, 'ring', big)
+  const ht = (x: number, y: number, r: number, c: string[], big = false) => launch(x * W, y * H, r, c, 'heart', big)
+  const seq: Array<[number, () => void]> = [
+    [180, () => cl(0.28, 0.30, 72, GOLD)],
+    [470, () => ht(0.70, 0.26, 70, ROSE)],
+    [820, () => cl(0.50, 0.19, 82, MIX, true)],
+    [1150, () => ht(0.20, 0.40, 64, ROSEGOLD)],
+    [1460, () => cl(0.82, 0.36, 72, VIOLETMIX)],
+    [1780, () => ht(0.42, 0.29, 68, ROSE)],
+    [2080, () => { cl(0.17, 0.24, 66, GOLD); cl(0.84, 0.24, 66, TEALMIX) }],
+    [2420, () => ht(0.62, 0.44, 66, ROSEGOLD)],
+    [2680, () => cl(0.34, 0.40, 70, MIX)],
+    [2960, () => { cl(0.50, 0.50, 58, GOLD); ht(0.30, 0.50, 56, ROSE) }],
+  ]
+  seq.forEach(([t, fn]) => at(t, fn))
+  const F = 3420
+  at(F, () => { // DUAL FINALE: giant heart amid a full-sky barrage
+    ht(0.50, 0.335, 152, MIX, true)
+    cl(0.19, 0.27, 92, GOLD, true)
+    cl(0.81, 0.27, 92, ROSE, true)
+    cl(0.32, 0.50, 76, VIOLETMIX)
+    cl(0.68, 0.50, 76, TEALMIX)
+    screenFlash(0.62)
+  })
+  at(F + 340, () => { cl(0.13, 0.42, 72, GOLD); cl(0.87, 0.42, 72, ROSE); ht(0.50, 0.52, 74, ROSEGOLD) })
+  at(F + 1180, showMessage)
+  const amb = () => {
+    if (phase !== 'message') return
+    ;(Math.random() < 0.5 ? cl : ht)(0.2 + Math.random() * 0.6, 0.2 + Math.random() * 0.2, 56, MIX)
+    at(1700 + Math.random() * 1300, amb)
+  }
+  at(F + 2500, amb)
+}
+
+function showMessage() {
+  phase = 'message'
+  promptShow.value = false
+  msgShow.value = true
+  CSTAR.on = true
+  at(900, () => { if (phase === 'message') prompt2Show.value = true })
+  // auto-advance to the gift drop if no tap
+  at(6500, () => { if (phase === 'message') beginB() })
+}
+
+function beginB() {
+  if (phase !== 'message') return
+  phase = 'bFall'
+  prompt2Show.value = false
+  msgShow.value = false
+  // flare the chosen star, then it becomes the falling gift-meteor
+  flashP(CSTAR.x, CSTAR.y, 58, '#fff3d0')
+  ringBurst(CSTAR.x, CSTAR.y, 42, ['#fff3d0', '#ffd77a'], false)
+  meteor = { sx: CSTAR.x, sy: CSTAR.y, lx: W * LX, ly: H * LY, x: CSTAR.x, y: CSTAR.y,
+    start: 0, dur: 1700, rot: 0, scale: 1, bow: W * 0.10, emit: 0, done: false }
+  CSTAR.on = false
+  stageGolden.value = true // begin night -> golden; ~1.7s so it's golden by impact
+  startLoop()
+}
+
+// reduced motion: no rAF loops. Jump straight to the golden-hour box-landed
+// state, then hand off to the gift scene shortly after.
 function endStatic() {
   cancelled = false
-  stars.forEach((s) => { s.lit = true })
-  lines.forEach((l) => { l.drawn = true })
-  panTo(360, 580, 0.55)
-  titleShow.value = false
-  fallLineShow.value = false
-  promptShow.value = true
-  phase = 'invite'
-  at(6000, finish)
+  universeDim.value = true
+  stageGolden.value = true
+  stageFalling.value = true
+  boxAssembled.value = true
+  phase = 'ready'
+  at(700, finish)
 }
 
 // ---------------- interactions ----------------
 function onStageClick() {
   if (reduced) { finish(); return }
-  if (phase === 'invite') triggerFall()
+  if (phase === 'invite') beginA()
+  else if (phase === 'message') beginB()
 }
 function onSkip() {
   finish()
 }
 
 onMounted(() => {
+  resize()
+  window.addEventListener('resize', resize)
   if (reduced) { endStatic(); return }
   run()
 })
@@ -300,8 +612,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   cancelled = true
   clearTimers()
-  meteorEls.forEach(m => m.remove())
-  meteorEls.length = 0
+  stopLoop()
+  window.removeEventListener('resize', resize)
 })
 </script>
 
@@ -360,9 +672,9 @@ onBeforeUnmount(() => {
     <div
       ref="universeRef"
       class="su-universe"
+      :class="{ dim: universeDim }"
     >
       <svg
-        ref="linesRef"
         class="su-lines"
         viewBox="0 0 720 1280"
         preserveAspectRatio="none"
@@ -383,7 +695,6 @@ onBeforeUnmount(() => {
       <div
         v-for="(s, i) in stars"
         :key="i"
-        :ref="(el) => setStarEl(el as Element | null, i)"
         class="su-star"
         :class="{ lit: s.lit }"
         :style="{ left: s.x + 'px', top: s.y + 'px' }"
@@ -392,7 +703,9 @@ onBeforeUnmount(() => {
         <div class="su-card">
           <img
             :src="s.src"
-            alt=""
+            :alt="s.hasCustomMedia ? photoAlt(s.cap) : ''"
+            decoding="async"
+            @error="restorePhotoPlaceholder(i)"
           >
         </div>
         <div class="su-sdot" />
@@ -405,15 +718,28 @@ onBeforeUnmount(() => {
       </div>
 
       <div
-        ref="moonRef"
         class="su-moon"
+        :class="{ 'has-video': moonVideoSrc }"
         data-media="video"
         role="img"
-        :aria-label="L(starIntro.capMoon)"
+        :aria-label="L(starIntroVideoSlot.caption)"
       >
         <div class="su-face">
+          <video
+            v-if="moonVideoSrc"
+            :src="moonVideoSrc"
+            :poster="moonPlaceholderSrc"
+            autoplay
+            loop
+            muted
+            playsinline
+            preload="metadata"
+            aria-hidden="true"
+            @error="restoreVideoPlaceholder"
+          />
           <img
-            :src="moonSrc"
+            v-else
+            :src="moonPlaceholderSrc"
             alt=""
           >
         </div>
@@ -427,20 +753,72 @@ onBeforeUnmount(() => {
           <i />
         </div>
         <div class="su-mcap">
-          {{ L(starIntro.capMoon) }}
+          {{ L(starIntroVideoSlot.caption) }}
         </div>
       </div>
     </div>
 
+    <!-- fireworks + gift-meteor canvas -->
+    <canvas
+      ref="fxRef"
+      class="su-fx"
+      aria-hidden="true"
+    />
     <div
-      ref="meteorLayerRef"
-      class="su-meteor-layer"
+      ref="flashRef"
+      class="su-flash"
       aria-hidden="true"
     />
     <div
       class="su-glow"
       aria-hidden="true"
     />
+
+    <!-- landed gift box (assembles on impact; verbatim from mockup 03/11) -->
+    <div
+      class="su-box"
+      :class="{ assembled: boxAssembled }"
+      aria-hidden="true"
+    >
+      <div class="su-contact" />
+      <div class="su-top" />
+      <div class="su-front" />
+      <div class="su-ribbon su-r-top" />
+      <div class="su-ribbon su-r-v" />
+      <div class="su-ribbon su-r-h" />
+      <div class="su-shimmer" />
+      <div class="su-bow">
+        <div class="su-bow-loop l" />
+        <div class="su-bow-loop r" />
+        <div class="su-bow-knot" />
+      </div>
+      <div class="su-tag">
+        <div class="su-string" />
+        <div class="su-card2">
+          {{ L(uiText.nameTag) }}
+        </div>
+      </div>
+    </div>
+
+    <!-- celebration message -->
+    <div
+      class="su-msg"
+      :class="{ show: msgShow }"
+      aria-hidden="true"
+    >
+      <div class="su-hundred">
+        100
+      </div>
+      <div class="su-fhead">
+        {{ L(starIntro.celebrateTitle) }}
+      </div>
+      <div class="su-fsub">
+        {{ L(starIntro.celebrateSub) }}
+      </div>
+      <div class="su-names">
+        Jay&nbsp;·&nbsp;苙綺&nbsp;·&nbsp;2026.04.28 → 2026.08.05
+      </div>
+    </div>
 
     <!-- copy overlays -->
     <div
@@ -462,20 +840,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div
-      class="su-fallline"
-      :class="{ show: fallLineShow }"
-      aria-hidden="true"
-    >
-      <template
-        v-for="(ln, j) in L(starIntro.fallLine).split('\n')"
-        :key="j"
-      >
-        <br v-if="j > 0">
-        {{ ln }}
-      </template>
-    </div>
-
+    <!-- phase 2 "tap to celebrate" prompt -->
     <div
       class="su-prompt"
       :class="{ show: promptShow }"
@@ -486,6 +851,20 @@ onBeforeUnmount(() => {
       </div>
       <div class="su-ptext">
         {{ L(starIntro.tapPrompt) }}
+      </div>
+    </div>
+
+    <!-- "tap and your gift arrives" prompt -->
+    <div
+      class="su-prompt"
+      :class="{ show: prompt2Show }"
+      aria-hidden="true"
+    >
+      <div class="su-ripple">
+        <div class="su-core" />
+      </div>
+      <div class="su-ptext">
+        {{ L(starIntro.giftDropPrompt) }}
       </div>
     </div>
 
@@ -537,7 +916,7 @@ onBeforeUnmount(() => {
 .su-stage.golden .su-bg-night { opacity: 0; }
 .su-stage.golden .su-bg-golden { opacity: 1; }
 
-/* twinkle dust (night) */
+/* twinkle dust (night) — kept through the fireworks for continuity */
 .su-dust { position: absolute; inset: 0; pointer-events: none; transition: opacity 1.4s ease; }
 .su-stage.golden .su-dust { opacity: 0; }
 .su-d {
@@ -552,10 +931,10 @@ onBeforeUnmount(() => {
 }
 .su-stage.golden .su-horizon { opacity: 0; }
 
-/* ===== Golden-hour scene furniture (revealed in phase 4) ===== */
+/* ===== Golden-hour scene furniture (revealed in phase B) ===== */
 .su-godray {
   position: absolute; top: -8%; left: 50%; transform: translateX(-50%); width: 78%; height: 82%;
-  pointer-events: none; opacity: 0; transition: opacity 1.4s ease .3s; mix-blend-mode: screen;
+  pointer-events: none; opacity: 0; transition: opacity 1.4s ease .3s; mix-blend-mode: screen; z-index: 5;
   background: linear-gradient(180deg, rgba(255, 244, 210, .42), rgba(255, 224, 158, .10) 62%, transparent);
   clip-path: polygon(37% 0, 63% 0, 90% 100%, 10% 100%);
 }
@@ -568,7 +947,7 @@ onBeforeUnmount(() => {
 .su-stage.golden .su-godray { opacity: 1; }
 
 .su-ground {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 34%; pointer-events: none; opacity: 0;
+  position: absolute; left: 0; right: 0; bottom: 0; height: 34%; pointer-events: none; opacity: 0; z-index: 5;
   transition: opacity 1.4s ease .2s;
   background: linear-gradient(180deg, transparent, rgba(196, 146, 84, .55) 42%, #a9713f 100%);
 }
@@ -579,7 +958,7 @@ onBeforeUnmount(() => {
 .su-stage.golden .su-ground { opacity: 1; }
 
 /* soft floating golden dust in the warm scene */
-.su-gdust { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 1.4s ease .4s; }
+.su-gdust { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 1.4s ease .4s; z-index: 5; }
 .su-stage.golden .su-gdust { opacity: 1; }
 .su-gd {
   position: absolute; border-radius: 50%;
@@ -598,6 +977,8 @@ onBeforeUnmount(() => {
   transform-origin: 0 0; will-change: transform; opacity: 1;
   transition: transform 1250ms cubic-bezier(.62, .02, .24, 1), opacity .6s ease;
 }
+.su-universe.dim { opacity: .16; }
+.su-stage.golden .su-universe { opacity: 0; }
 .su-lines {
   position: absolute; left: 0; top: 0; width: 720px; height: 1280px; overflow: visible;
   transition: opacity .5s ease;
@@ -642,11 +1023,13 @@ onBeforeUnmount(() => {
               inset 0 0 40px rgba(255, 255, 255, .22), 0 0 0 2px rgba(244, 190, 58, .5);
 }
 .su-face { position: absolute; inset: 0; }
-.su-face img {
+.su-face img,
+.su-face video {
   position: absolute; inset: -10%; width: 120%; height: 120%; object-fit: cover;
   filter: brightness(1.12) saturate(1.02);
   animation: su-moondrift 9s ease-in-out infinite alternate;
 }
+.su-moon.has-video .su-play { display: none; }
 @keyframes su-moondrift { 0% { transform: translate(-2%, -1%) scale(1.05); } 100% { transform: translate(2%, 2%) scale(1.12); } }
 .su-wash {
   position: absolute; inset: 0;
@@ -688,47 +1071,30 @@ onBeforeUnmount(() => {
   text-shadow: 0 1px 6px rgba(0, 0, 0, .85);
 }
 
-/* ===== PHASE 3 — stage-level meteors spawned from the snapshot ===== */
-.su-meteor-layer { position: absolute; inset: 0; pointer-events: none; z-index: 8; }
-:deep(.su-meteor) {
-  position: absolute; transform: translate(-50%, -50%); will-change: transform;
-  transition: transform 1.05s cubic-bezier(.34, .42, .2, 1);
+/* ===== Fireworks + gift-meteor canvas ===== */
+.su-fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
+.su-flash {
+  position: absolute; inset: 0; background: #fff6e0; opacity: 0; z-index: 7;
+  pointer-events: none; mix-blend-mode: screen;
 }
-:deep(.su-meteor .su-trail) {
-  position: absolute; left: 50%; top: 50%; height: 3px; width: 0; transform-origin: 0 50%;
-  background: linear-gradient(90deg, rgba(244, 190, 58, 0), rgba(255, 238, 180, .95));
-  border-radius: 3px; opacity: 0; transition: opacity .45s ease; filter: blur(.4px);
-}
-:deep(.su-meteor .su-mdot) {
-  position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px;
-  border-radius: 50%; background: var(--star);
-  box-shadow: 0 0 9px 3px rgba(255, 246, 214, 1), 0 0 22px 8px rgba(244, 190, 58, .75);
-  transition: opacity .5s ease, transform .5s ease;
-}
-:deep(.su-meteor.fall .su-trail) { opacity: .95; }
-:deep(.su-meteor.arrived .su-trail) { opacity: 0; }
-:deep(.su-meteor.converged .su-mdot) { opacity: 0; transform: scale(.2); }
 
 /* landing glow at the gift point */
 .su-glow {
-  position: absolute; left: 50%; top: 62%; width: 230px; height: 230px; z-index: 5;
+  position: absolute; left: 50%; top: 62%; width: 230px; height: 230px; z-index: 6;
   transform: translate(-50%, -50%) scale(.2); opacity: 0; pointer-events: none;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 236, 180, .9) 0%, rgba(244, 190, 58, .4) 34%, transparent 68%);
   transition: opacity 1s ease, transform 1.1s ease;
 }
 .su-stage.falling .su-glow { opacity: .95; transform: translate(-50%, -50%) scale(1); }
-.su-stage.ready .su-glow { opacity: .6; transform: translate(-50%, -50%) scale(.92); animation: su-glowbreathe 4.5s ease-in-out 1s infinite; }
-@keyframes su-glowbreathe {
-  0%, 100% { opacity: .45; transform: translate(-50%, -50%) scale(.86); }
-  50% { opacity: .72; transform: translate(-50%, -50%) scale(.98); }
-}
 
-/* ===== Gift box (matches the site's gift scene) ===== */
+/* ===== Gift box (matches the site's gift scene; verbatim from mockup 03/11) ===== */
 .su-box {
-  position: absolute; left: 50%; top: 62%; width: 170px; height: 150px; z-index: 7;
-  transform: translate(-50%, -46%); pointer-events: none;
+  position: absolute; left: 50%; top: 62%; width: 170px; height: 150px; z-index: 8;
+  transform: translate(-50%, -46%) scale(.42); opacity: 0; pointer-events: none;
+  transition: transform .6s cubic-bezier(.2, .9, .25, 1), opacity .45s ease;
 }
+.su-box.assembled { opacity: 1; transform: translate(-50%, -46%) scale(1); }
 .su-contact {
   position: absolute; left: 50%; bottom: -6px; width: 186px; height: 26px;
   transform: translateX(-50%); border-radius: 50%;
@@ -787,7 +1153,7 @@ onBeforeUnmount(() => {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .16), transparent);
   z-index: 3; pointer-events: none; opacity: 0; margin-left: -90px;
 }
-.su-box.ready .su-shimmer { opacity: 1; animation: su-boxshimmer 6s ease-in-out 1.2s infinite; }
+.su-box.assembled .su-shimmer { opacity: 1; animation: su-boxshimmer 6s ease-in-out 1.2s infinite; }
 @keyframes su-boxshimmer { 0%, 100% { margin-left: -90px; opacity: 0; } 12% { opacity: 1; } 50% { margin-left: 90px; opacity: 1; } 62% { opacity: 0; } }
 
 /* bow (filled satin loops) pops on top */
@@ -835,24 +1201,26 @@ onBeforeUnmount(() => {
   box-shadow: inset 0 1px 1px rgba(61, 43, 31, .25);
 }
 
-/* assembly sparkle burst */
-.su-sparkle {
-  position: absolute; left: 50%; top: 62%; z-index: 8; transform: translate(-50%, -50%);
-  width: 0; height: 0; pointer-events: none;
+/* ===== Celebration message ===== */
+.su-msg {
+  position: absolute; inset: 0; display: flex; flex-direction: column; z-index: 9;
+  align-items: center; justify-content: center; text-align: center; gap: 12px;
+  opacity: 0; transition: opacity 1.1s ease; pointer-events: none; padding: 0 26px;
 }
-.su-sparkle span {
-  position: absolute; left: 0; top: 0; width: 6px; height: 6px; margin: -3px 0 0 -3px;
-  border-radius: 50%; background: radial-gradient(circle, #fff8e2, rgba(244, 190, 58, 0)); opacity: 0;
+.su-msg.show { opacity: 1; }
+.su-hundred {
+  font-family: "Noto Serif KR", serif; font-weight: 700; font-size: 88px; line-height: 1;
+  color: var(--gold); text-shadow: 0 0 26px rgba(244, 190, 58, .65), 0 0 60px rgba(255, 184, 92, .35);
+  transform: scale(.7); opacity: 0; transition: transform .9s cubic-bezier(.2, .9, .25, 1), opacity .8s ease;
 }
-.su-sparkle.show span { animation: su-spark .9s ease-out 1.15s; }
-@keyframes su-spark {
-  0% { opacity: 0; transform: translate(0, 0) scale(.3); }
-  30% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(1); }
-}
+.su-msg.show .su-hundred { transform: scale(1); opacity: 1; }
+.su-fhead { font-family: "Noto Serif KR", serif; font-weight: 700; font-size: 24px; color: var(--cream); text-shadow: 0 2px 14px rgba(0, 0, 0, .6); }
+.su-fsub { font-family: Gaegu, cursive; font-size: 17px; color: var(--amber); opacity: .95; }
+.su-names { font-family: Pretendard, sans-serif; font-size: 12.5px; letter-spacing: .12em; color: rgba(255, 249, 237, .72); margin-top: 4px; }
 
 /* ===== Copy overlays ===== */
 .su-title {
-  position: absolute; left: 0; right: 0; top: 16%; text-align: center; padding: 0 26px; z-index: 9;
+  position: absolute; left: 0; right: 0; top: 16%; text-align: center; padding: 0 26px; z-index: 10;
   opacity: 0; transition: opacity 1s ease; pointer-events: none;
 }
 .su-title.show { opacity: 1; }
@@ -862,14 +1230,7 @@ onBeforeUnmount(() => {
   color: var(--cream); line-height: 1.6; text-shadow: 0 2px 12px rgba(0, 0, 0, .6);
 }
 
-.su-fallline {
-  position: absolute; left: 0; right: 0; top: 11%; text-align: center; padding: 0 30px; z-index: 9;
-  font-family: "Noto Serif KR", serif; font-weight: 500; font-size: 18px; line-height: 1.7; color: var(--cream);
-  text-shadow: 0 2px 14px rgba(60, 30, 10, .6); opacity: 0; transition: opacity 1s ease; pointer-events: none;
-}
-.su-fallline.show { opacity: 1; }
-
-/* tap prompt (phase 2) */
+/* tap prompts (phase 2 celebrate / phase B gift drop) */
 .su-prompt {
   position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%); z-index: 12;
   text-align: center; opacity: 0; transition: opacity .7s ease; pointer-events: none;
@@ -893,21 +1254,6 @@ onBeforeUnmount(() => {
 }
 @keyframes su-pulsetext { 0%, 100% { opacity: .72; } 50% { opacity: 1; } }
 
-/* ready prompt (phase 4) */
-.su-readyp {
-  position: absolute; left: 50%; bottom: 16%; transform: translateX(-50%); z-index: 12;
-  text-align: center; opacity: 0; transition: opacity .8s ease; pointer-events: none; padding: 0 24px;
-}
-.su-readyp.show { opacity: 1; }
-.su-rmain {
-  font-family: "Noto Serif KR", serif; font-weight: 500; font-size: 20px; color: var(--brown);
-  text-shadow: 0 1px 0 rgba(255, 252, 244, .7); white-space: nowrap;
-}
-.su-rmain::after {
-  content: ""; display: block; width: 30px; height: 2px; margin: 11px auto 0;
-  background: linear-gradient(90deg, transparent, var(--brass), transparent);
-}
-
 /* ===== Controls ===== */
 .su-skip {
   position: absolute; top: calc(16px + env(safe-area-inset-top)); right: 16px; z-index: 30;
@@ -922,11 +1268,11 @@ onBeforeUnmount(() => {
 
 @media (prefers-reduced-motion: reduce) {
   .su-universe, .su-bg-night, .su-bg-golden, .su-dust, .su-horizon, .su-godray, .su-ground, .su-gdust,
-  .su-glow, .su-lines, .su-star, .su-card, .su-sdot, .su-cap,
+  .su-glow, .su-lines, .su-star, .su-card, .su-sdot, .su-cap, .su-box,
   .su-top, .su-front, .su-r-v, .su-r-h, .su-r-top, .su-bow, .su-tag, .su-contact,
-  .su-title, .su-fallline, .su-prompt, .su-readyp, .su-skip { transition: none !important; }
-  .su-d, .su-gd, .su-sdot, .su-sweep, .su-face img, .su-bar i,
+  .su-title, .su-prompt, .su-msg, .su-hundred, .su-flash, .su-skip { transition: none !important; }
+  .su-d, .su-gd, .su-sdot, .su-sweep, .su-face img, .su-face video, .su-bar i,
   .su-godray::after, .su-glow, .su-shimmer, .su-ripple::before, .su-ripple::after,
-  .su-ptext, .su-sparkle.show span { animation: none !important; }
+  .su-ptext { animation: none !important; }
 }
 </style>

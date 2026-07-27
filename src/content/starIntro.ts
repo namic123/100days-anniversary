@@ -18,14 +18,24 @@ export const starIntro: Record<string, LocalizedText> = {
     en: 'Our memories\nbecame shining stars',
   },
   tapPrompt: {
-    'zh-TW': '輕觸畫面，星星就會落下',
-    ko: '화면을 탭하면 별이 내려와요',
-    en: 'Tap the screen to bring the stars down',
+    'zh-TW': '輕觸畫面，一起慶祝100天',
+    ko: '화면을 탭하면 100일을 축하해요',
+    en: 'Tap to celebrate our 100 days',
   },
-  fallLine: {
-    'zh-TW': '我們的星星，\n化作送給妳的禮物落下。',
-    ko: '우리의 별들이,\n너에게 줄 선물이 되어 내려와.',
-    en: 'Our stars fall,\nas a gift for you.',
+  celebrateTitle: {
+    'zh-TW': '我們的第一個100天，恭喜！',
+    ko: '우리의 첫 100일, 축하해!',
+    en: 'Happy first 100 days!',
+  },
+  celebrateSub: {
+    'zh-TW': '在兩個不同的國家，用同一份心',
+    ko: '서로 다른 두 나라에서, 같은 마음으로',
+    en: 'From two countries, with one heart',
+  },
+  giftDropPrompt: {
+    'zh-TW': '輕觸畫面，禮物就會送到',
+    ko: '화면을 탭하면 선물이 도착해요',
+    en: 'Tap and your gift arrives',
   },
   capFirstMeeting: {
     'zh-TW': '初次見面',
@@ -51,5 +61,10 @@ export const starIntro: Record<string, LocalizedText> = {
     'zh-TW': '我們的第一次視訊',
     ko: '우리의 첫 영상통화',
     en: 'Our first video call',
+  },
+  photoAlt: {
+    'zh-TW': '我們的回憶照片',
+    ko: '우리의 추억 사진',
+    en: 'Our memory photo',
   },
 }

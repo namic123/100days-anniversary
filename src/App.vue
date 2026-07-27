@@ -160,7 +160,7 @@ function restart() {
       </div>
     </div>
 
-    <!-- Phase 0: Pre-intro (constellation tour → meteor shower → gift box) -->
+    <!-- Phase 0: Pre-intro (constellation tour → fireworks → star-drop gift box) -->
     <StarIntro
       v-if="phase === 'preintro'"
       :locale="locale"
