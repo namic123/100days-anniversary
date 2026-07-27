@@ -5,6 +5,7 @@ import { type Locale, type LocalizedText, getLocalizedText } from '@/content/loc
 import { useBookEngine, type BookPage } from '@/composables/useBookEngine'
 import { uiText } from '@/content/ui'
 import type { TimelineItem } from '@/content/timeline'
+import { timelineMedia, type TimelineMediaKind } from '@/content/timelineMedia'
 import type { MemoryItem } from '@/content/memories'
 import type { FutureWish } from '@/content/futurePlans'
 
@@ -106,6 +107,103 @@ function memoryItem(page: BookPage): MemoryItem { return page.data as MemoryItem
 function wishesOf(page: BookPage): FutureWish[] { return (page.data as FutureWish[]) ?? [] }
 function letterParagraphs(page: BookPage): string[] {
   return getLocalizedText(page.content as LocalizedText, props.locale).split('\n\n')
+}
+
+/* Timeline descriptions hold \n\n-separated paragraph groups (some entries are
+   long — entry 5 especially), rendered as individual <p> in a scrollable body. */
+function timelineParagraphs(page: BookPage): string[] {
+  return t(timelineItem(page).description).split('\n\n')
+}
+
+/* ---------- timeline media tiles (2–3 photo/video slots per entry) ----------
+   Real media isn't provided yet: glob-import any dropped files from
+   src/assets/timeline-media/{photos,video}, and fall back to a fauxPhoto()
+   placeholder (same pattern as StarIntro) so slots always render. */
+const importedTimelinePhotos = import.meta.glob<string>(
+  '/src/assets/timeline-media/photos/*.webp',
+  { eager: true, import: 'default', query: '?url' },
+)
+const importedTimelineVideos = import.meta.glob<string>(
+  '/src/assets/timeline-media/video/*.mp4',
+  { eager: true, import: 'default', query: '?url' },
+)
+
+function importedMediaUrl(
+  modules: Record<string, string>,
+  fileName: string,
+): string | null {
+  const entry = Object.entries(modules).find(([path]) => path.endsWith(`/${fileName}`))
+  return entry?.[1] ?? null
+}
+
+/* Placeholder photo generator — verbatim from StarIntro/the mockup. Every slot
+   is a warm faux SVG until a real photo/video is dropped in. */
+function fauxPhoto(seed = 0, w = 300, h = 400): string {
+  const P = [
+    ['#ffd9a0', '#f0907a', '#fff1c9', '#caa06a'],
+    ['#ffe3b0', '#f4be3a', '#fff7df', '#b98a4e'],
+    ['#f7c6a0', '#e88d6d', '#ffe6bd', '#a9713f'],
+    ['#cfe0f0', '#f0b98a', '#fff4d8', '#8fa06a'],
+    ['#ffcf9a', '#c98a5a', '#ffe9c2', '#7e8a56'],
+    ['#ffe9c8', '#ffb85c', '#fffbe9', '#c99a2e'],
+  ][seed % 6]
+  const cx = 150 + ((seed * 37) % 80) - 40
+  const cy = 120 + ((seed * 53) % 60) - 30
+  const g = `pg${seed}`
+  const svg =
+`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}' viewBox='0 0 300 400'>
+<defs><linearGradient id='${g}' x1='0' y1='0' x2='0' y2='1'>
+<stop offset='0' stop-color='${P[0]}'/><stop offset='1' stop-color='${P[1]}'/></linearGradient>
+<radialGradient id='s${g}' cx='0.5' cy='0.5' r='0.5'>
+<stop offset='0' stop-color='${P[2]}'/><stop offset='1' stop-color='${P[2]}' stop-opacity='0'/></radialGradient></defs>
+<rect width='300' height='400' fill='url(#${g})'/>
+<circle cx='${cx}' cy='${cy}' r='70' fill='url(#s${g})'/>
+<circle cx='${cx}' cy='${cy}' r='26' fill='${P[2]}' opacity='0.9'/>
+<path d='M0 300 Q150 ${250 + (seed % 3) * 20} 300 300 L300 400 L0 400 Z' fill='${P[3]}'/>
+<rect width='300' height='400' fill='rgba(40,25,15,0.06)'/>
+<rect x='4' y='4' width='292' height='392' rx='4' fill='none' stroke='rgba(255,255,255,.10)'/>
+</svg>`
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg)
+}
+
+interface TimelineTile {
+  id: string
+  kind: TimelineMediaKind
+  src: string
+  placeholderSrc: string
+  hasCustomMedia: boolean
+}
+
+/* Built ONCE — media is static (locale-independent), so precompute the tiles per
+   entry id instead of regenerating faux SVGs on every reactive render. */
+const timelineTileMap = new Map<string, TimelineTile[]>()
+let tileSeed = 0
+for (const [entryId, slots] of Object.entries(timelineMedia)) {
+  timelineTileMap.set(
+    entryId,
+    slots.map((slot) => {
+      const placeholderSrc = fauxPhoto(tileSeed++, 210, 280)
+      const modules = slot.kind === 'video' ? importedTimelineVideos : importedTimelinePhotos
+      const customSrc = importedMediaUrl(modules, slot.fileName)
+      return {
+        id: slot.id,
+        kind: slot.kind,
+        src: customSrc ?? placeholderSrc,
+        placeholderSrc,
+        hasCustomMedia: Boolean(customSrc),
+      }
+    }),
+  )
+}
+function timelineTiles(page: BookPage): TimelineTile[] {
+  return timelineTileMap.get(timelineItem(page).id) ?? []
+}
+function onTileError(e: Event, tile: TimelineTile) {
+  const img = e.target as HTMLImageElement
+  if (!img.dataset.fallback) {
+    img.dataset.fallback = '1'
+    img.src = tile.placeholderSrc
+  }
 }
 
 /* Auto-fit a letter's text to its page: reset to the base size, then shrink the
@@ -581,24 +679,62 @@ onBeforeUnmount(() => {
 
               <!-- TIMELINE -->
               <template v-else-if="page.section === 'timeline'">
-                <div class="eyebrow">
-                  {{ t(storyChapterLabel) }}
-                </div>
-                <h2 class="title small">
-                  {{ t(timelineItem(page).title) }}
-                </h2>
-                <div class="rule" />
-                <div class="tl-entry">
+                <!-- fixed header: story label + title + date -->
+                <div class="tl-head">
+                  <div class="eyebrow">
+                    {{ t(storyChapterLabel) }}
+                  </div>
+                  <h2 class="title small">
+                    {{ t(timelineItem(page).title) }}
+                  </h2>
+                  <div class="rule" />
                   <div class="tl-date">
                     {{ formatDate(timelineItem(page).date) }}
                   </div>
-                  <p class="tl-text">
-                    {{ t(timelineItem(page).description) }}
-                  </p>
                 </div>
-                <div class="tl-scene svg-slot">
-                  <!-- eslint-disable-next-line vue/no-v-html -->
-                  <span v-html="ART.call" />
+                <!-- scrollable body: paragraphs + media tiles -->
+                <div class="tl-body">
+                  <p
+                    v-for="(para, pi) in timelineParagraphs(page)"
+                    :key="pi"
+                    class="tl-text"
+                  >
+                    {{ para }}
+                  </p>
+                  <div
+                    v-if="timelineTiles(page).length"
+                    class="tl-media"
+                  >
+                    <div
+                      v-for="tile in timelineTiles(page)"
+                      :key="tile.id"
+                      class="tl-tile"
+                      :data-media="tile.kind"
+                    >
+                      <video
+                        v-if="tile.kind === 'video' && tile.hasCustomMedia"
+                        :src="tile.src"
+                        autoplay
+                        loop
+                        muted
+                        playsinline
+                        preload="metadata"
+                        aria-hidden="true"
+                      />
+                      <img
+                        v-else
+                        :src="tile.src"
+                        alt=""
+                        decoding="async"
+                        @error="(e) => onTileError(e, tile)"
+                      >
+                      <span
+                        v-if="tile.kind === 'video'"
+                        class="tl-play"
+                        aria-hidden="true"
+                      >▶</span>
+                    </div>
+                  </div>
                 </div>
               </template>
 
@@ -1127,51 +1263,94 @@ onBeforeUnmount(() => {
 }
 
 /* ---------- timeline ---------- */
-.tl-entry {
-  margin-top: 10px;
-  position: relative;
-  padding-left: 20px;
-  flex: 1;
-  overflow: hidden;
-}
-.tl-entry::before {
-  content: "";
-  position: absolute;
-  left: 5px;
-  top: 6px;
-  bottom: 10px;
-  width: 2px;
-  background: repeating-linear-gradient(var(--line) 0 5px, transparent 5px 10px);
-}
-.tl-entry::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 5px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--gold);
-  box-shadow: 0 0 0 3px rgba(244, 190, 58, 0.28);
+/* Fixed header (label + title + date) never shrinks; the body below scrolls so
+   long entries (esp. 2026-06-26) are never clipped on short viewports. */
+.tl-head {
+  flex: none;
 }
 .tl-date {
+  position: relative;
+  padding-left: 18px;
+  margin-top: 2px;
   font-family: var(--hand);
   font-size: 15px;
   color: var(--rose);
   letter-spacing: 0.5px;
 }
+.tl-date::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 3px rgba(244, 190, 58, 0.28);
+}
+.tl-body {
+  flex: 1;
+  min-height: 0;
+  margin-top: 10px;
+  padding-right: 4px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
 .tl-text {
   font-family: var(--round);
   font-size: 13.5px;
   color: var(--ink);
-  line-height: 1.55;
-  margin-top: 6px;
+  line-height: 1.7;
+  margin: 0 0 0.7em;
 }
-.tl-scene {
+.tl-text:last-child {
+  margin-bottom: 0;
+}
+/* row of 2–3 photo/video tiles under the entry text */
+.tl-media {
   display: flex;
-  justify-content: center;
-  margin-top: 6px;
-  flex: none;
+  gap: 8px;
+  margin-top: 14px;
+}
+.tl-tile {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--paper);
+  border: 2px solid rgba(203, 176, 131, 0.7);
+  box-shadow: 0 3px 9px rgba(61, 43, 31, 0.16);
+  transform: rotate(-1deg);
+}
+.tl-tile:nth-child(even) {
+  transform: rotate(1.5deg);
+}
+.tl-tile img,
+.tl-tile video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.tl-play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(20, 14, 10, 0.42);
+  border: 1.5px solid rgba(255, 249, 237, 0.9);
+  color: var(--cream);
+  font-size: 12px;
+  line-height: 30px;
+  text-align: center;
+  padding-left: 2px;
 }
 
 /* ---------- memory ---------- */
@@ -1354,7 +1533,8 @@ onBeforeUnmount(() => {
   color: var(--ink);
 }
 /* keep the letter text clear of the growing sunflower in the bottom-left */
-.diary-page.letter .page-inner {
+.diary-page.letter .page-inner,
+.diary-page.timeline .page-inner {
   padding-bottom: 40px;
 }
 
