@@ -108,6 +108,30 @@ function letterParagraphs(page: BookPage): string[] {
   return getLocalizedText(page.content as LocalizedText, props.locale).split('\n\n')
 }
 
+/* Auto-fit a letter's text to its page: reset to the base size, then shrink the
+   font + line-height together (keeping the ruled lines aligned) until the whole
+   letter fits — so long letters never get clipped on shorter viewports. */
+function fitLetter(el: HTMLElement) {
+  el.style.setProperty('--fs', '16px')
+  el.style.setProperty('--lh', '24px')
+  void el.offsetHeight
+  let fs = 16
+  while (el.scrollHeight > el.clientHeight + 1 && fs > 10.5) {
+    fs -= 0.5
+    el.style.setProperty('--fs', `${fs}px`)
+    el.style.setProperty('--lh', `${(fs * 1.5).toFixed(2)}px`)
+  }
+}
+function scheduleFit(el: HTMLElement) {
+  // Defer past the current render so the page's flex layout is settled before
+  // we measure scrollHeight/clientHeight.
+  requestAnimationFrame(() => requestAnimationFrame(() => fitLetter(el)))
+}
+const vFitLetter = {
+  mounted: (el: HTMLElement) => scheduleFit(el),
+  updated: (el: HTMLElement) => scheduleFit(el),
+}
+
 function formatDate(dateStr: string): string {
   return dateStr.replace(/-/g, '.')
 }
@@ -228,20 +252,20 @@ function handFlower(): string {
     + '<path d="M19 40 Q20 26 34 26 Q48 26 49 40 Q42 33 34 33 Q26 33 19 40 Z" fill="#5b4128"/>'
     + '<circle cx="29" cy="43" r="2" fill="#3d2b1f"/><circle cx="39" cy="43" r="2" fill="#3d2b1f"/>'
     + '<path d="M30 48 Q34 51 38 48" stroke="#3d2b1f" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
-    + '<path d="M48 64 Q62 58 74 60" stroke="#3d2b1f" stroke-width="2.2" fill="none" stroke-linecap="round"/>'
+    + '<path d="M48 64 Q70 55 90 61" stroke="#3d2b1f" stroke-width="2.2" fill="none" stroke-linecap="round"/>'
     + '</g>'
-    + '<g transform="translate(84,26) scale(.85)">'
+    + '<g transform="translate(70,26) scale(.85)">'
     + '<path d="M30 34 L30 52" stroke="#7e8a56" stroke-width="3" stroke-linecap="round"/>'
     + '<g transform="translate(30,24)">' + petals(0, 0, 12, 12, '#f4be3a') + '<circle cx="0" cy="0" r="8" fill="#3d2b1f"/></g>'
     + '</g>'
     + '<g transform="translate(120,6)">'
     + '<path d="M18 66 Q18 56 34 56 Q50 56 50 66 L52 80 L16 80 Z" fill="#f0907a" stroke="#3d2b1f" stroke-width="2.2" stroke-linejoin="round"/>'
     + '<circle cx="34" cy="42" r="16" fill="#ffe0b0" stroke="#3d2b1f" stroke-width="2.2"/>'
-    + '<path d="M18 46 Q16 24 34 23 Q52 24 50 46 Q50 51 47 55 L45 36 Q40 30 34 30 Q28 30 23 36 L21 55 Q18 51 18 46 Z" fill="#3d2b1f"/>'
-    + '<g transform="translate(47,30)"><circle cx="0" cy="0" r="2.8" fill="#3d2b1f"/>' + petals(0, 0, 2.8, 6, '#f4be3a') + '</g>'
+    + '<path d="M18 42 Q17.2 26 34 25.2 Q50.8 26 50 42 Q50 46.6 47.7 49.6 L46.2 39 Q40.1 32.9 34 32.9 Q27.9 32.9 21.8 39 L20.3 49.6 Q18 46.6 18 42 Z" fill="#3d2b1f"/>'
+    + '<g transform="translate(46,33)"><circle cx="0" cy="0" r="2.7" fill="#3d2b1f"/>' + petals(0, 0, 2.6, 6, '#f4be3a') + '</g>'
     + '<circle cx="29" cy="43" r="2" fill="#3d2b1f"/><circle cx="39" cy="43" r="2" fill="#3d2b1f"/>'
     + '<path d="M30 48 Q34 51 38 48" stroke="#3d2b1f" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
-    + '<path d="M20 64 Q8 58 -4 60" stroke="#3d2b1f" stroke-width="2.2" fill="none" stroke-linecap="round"/>'
+    + '<path d="M20 64 Q17 68 14 73" stroke="#3d2b1f" stroke-width="2.2" fill="none" stroke-linecap="round"/>'
     + '</g>'
     + '</svg>'
 }
@@ -258,7 +282,7 @@ function growSunflower(stage: number): string {
   const h = 14 + stage * 13
   const topY = baseY - h
   const midX = baseX + (stage % 2 ? 6 : -6)
-  let s = '<svg viewBox="0 0 96 140" width="74" height="108" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+  let s = '<svg viewBox="0 0 96 140" width="60" height="88" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
   s += '<ellipse cx="44" cy="135" rx="22" ry="5" fill="#5c3620" opacity=".5"/>'
   if (stage === 0) {
     s += '<path d="M44 135 q0 -11 0 -16" stroke="#6f7d45" stroke-width="3.2" fill="none" stroke-linecap="round"/>'
@@ -720,7 +744,10 @@ onBeforeUnmount(() => {
                   <!-- eslint-disable-next-line vue/no-v-html -->
                   <span v-html="ART.hand" />
                 </div>
-                <div class="letter-body">
+                <div
+                  v-fit-letter
+                  class="letter-body"
+                >
                   <p
                     v-for="(para, pi) in letterParagraphs(page)"
                     :key="pi"
@@ -1295,20 +1322,32 @@ onBeforeUnmount(() => {
 .letter-scene {
   display: flex;
   justify-content: center;
-  margin: 4px 0 8px;
+  margin: 2px 0 4px;
   flex: none;
+}
+.letter-scene :deep(svg) {
+  width: 138px;
+  height: auto;
 }
 /* Ruling lives on the body itself and shares the text line-height, so the lines
    always sit under the writing instead of drifting out of alignment. */
 .letter-body {
   font-family: var(--hand);
-  font-size: 16.5px;
-  line-height: 30px;
+  /* --fs / --lh are auto-fitted per letter by v-fit-letter so long letters
+     shrink to fit any viewport height instead of getting clipped. */
+  --fs: 16px;
+  --lh: 24px;
+  font-size: var(--fs);
+  line-height: var(--lh);
   color: var(--ink);
   flex: 1;
-  overflow: hidden;
+  min-height: 0;
+  /* Auto-fit shrinks most letters to fit; on very short viewports the longest
+     letters fall back to scrolling so no line is ever lost. */
+  overflow: hidden auto;
+  -webkit-overflow-scrolling: touch;
   background:
-    repeating-linear-gradient(transparent 0 29px, rgba(203, 176, 131, 0.26) 29px 30px);
+    repeating-linear-gradient(transparent 0 calc(var(--lh) - 1px), rgba(203, 176, 131, 0.26) calc(var(--lh) - 1px) var(--lh));
 }
 .letter-body p {
   margin: 0;
@@ -1316,7 +1355,7 @@ onBeforeUnmount(() => {
 }
 /* keep the letter text clear of the growing sunflower in the bottom-left */
 .diary-page.letter .page-inner {
-  padding-bottom: 74px;
+  padding-bottom: 40px;
 }
 
 /* ---------- ending ---------- */
@@ -1464,8 +1503,8 @@ onBeforeUnmount(() => {
   position: absolute;
   left: 22px;
   bottom: 8px;
-  width: 74px;
-  height: 108px;
+  width: 60px;
+  height: 88px;
   pointer-events: none;
   z-index: 2;
 }
@@ -1477,8 +1516,6 @@ onBeforeUnmount(() => {
 
 @media (max-width: 360px) {
   .title { font-size: 22px; }
-  .intro-sub { font-size: 13.5px; }
-  .letter-body { font-size: 15.5px; line-height: 29px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
