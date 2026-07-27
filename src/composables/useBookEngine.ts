@@ -3,7 +3,6 @@ import { computed, ref } from 'vue'
 import { letterPages } from '@/content/letter'
 import type { LocalizedText } from '@/content/localization'
 import { memories } from '@/content/memories'
-import { futureWishes } from '@/content/futurePlans'
 import { timeline } from '@/content/timeline'
 
 export interface BookPage {
@@ -42,21 +41,6 @@ function buildPageArray(): BookPage[] {
       data: item,
     })
   }
-
-  pages.push({ id: 'korea-taiwan-1', section: 'korea-taiwan' })
-  pages.push({ id: 'korea-taiwan-2', section: 'korea-taiwan' })
-
-  const wishesPerPage = Math.ceil(futureWishes.length / 2)
-  pages.push({
-    id: 'future-1',
-    section: 'future',
-    data: futureWishes.slice(0, wishesPerPage),
-  })
-  pages.push({
-    id: 'future-2',
-    section: 'future',
-    data: futureWishes.slice(wishesPerPage),
-  })
 
   for (const lp of letterPages) {
     pages.push({
@@ -116,29 +100,11 @@ export function useBookEngine() {
         section: 'memory',
       },
       {
-        id: 'korea-taiwan',
-        label: {
-          'zh-TW': '韓國與台灣',
-          ko: '한국과 대만',
-          en: 'Korea and Taiwan',
-        },
-        section: 'korea-taiwan',
-      },
-      {
-        id: 'future',
-        label: {
-          'zh-TW': '想一起創造的未來',
-          ko: '함께하고 싶은 미래',
-          en: 'Our Future Together',
-        },
-        section: 'future',
-      },
-      {
         id: 'letter',
         label: {
-          'zh-TW': '最後一封信',
-          ko: '마지막 편지',
-          en: 'Final Letter',
+          'zh-TW': '給苙綺',
+          ko: '苙綺에게',
+          en: 'To Lichi',
         },
         section: 'letter',
       },

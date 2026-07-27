@@ -59,7 +59,7 @@ describe('useBookEngine', () => {
   // Chapter/TOC support tests
   it('computes chapters with correct start pages', () => {
     const { chapters } = useBookEngine()
-    expect(chapters.value.length).toBe(7)
+    expect(chapters.value.length).toBe(5)
     expect(chapters.value[0].id).toBe('intro')
     expect(chapters.value[0].startPage).toBe(0)
     expect(chapters.value[1].id).toBe('story')

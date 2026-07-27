@@ -3,7 +3,6 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import { type Locale, type LocalizedText, getLocalizedText } from '@/content/localization'
 import { useBookEngine, type BookPage } from '@/composables/useBookEngine'
-import { anniversary } from '@/content/anniversary'
 import { uiText } from '@/content/ui'
 import type { TimelineItem } from '@/content/timeline'
 import type { MemoryItem } from '@/content/memories'
@@ -35,11 +34,6 @@ const introChapterLabel: LocalizedText = {
   'zh-TW': '我們的第一個100天',
   ko: '우리의 첫 100일',
   en: 'Our First 100 Days',
-}
-const introSubtext: LocalizedText = {
-  'zh-TW': '在兩個不同的國家，用同一份心走過的第一個100天',
-  ko: '서로 다른 두 나라에서 같은 마음으로 함께한 첫 100일',
-  en: 'Our first 100 days together, with one heart across two countries',
 }
 const storyChapterLabel: LocalizedText = {
   'zh-TW': '我們的故事',
@@ -77,9 +71,14 @@ const futureChapterLabel: LocalizedText = {
   en: 'Our Future Together',
 }
 const letterChapterLabel: LocalizedText = {
-  'zh-TW': '最後一封信',
-  ko: '마지막 편지',
-  en: 'Final Letter',
+  'zh-TW': '給苙綺',
+  ko: '苙綺에게',
+  en: 'To Lichi',
+}
+const introMapNote: LocalizedText = {
+  'zh-TW': '雖然相隔遙遠，但分享著每天的開始與結束，我們一直都在彼此的日常裡。',
+  ko: '멀리 떨어져 있었지만, 하루의 시작과 끝을 나누며 우리는 늘 서로의 일상 속에 있었어.',
+  en: "Though far apart, sharing the start and end of each day, we were always part of each other's everyday.",
 }
 const endingChapterLabel: LocalizedText = {
   'zh-TW': '向日葵結尾',
@@ -112,8 +111,6 @@ function letterParagraphs(page: BookPage): string[] {
 function formatDate(dateStr: string): string {
   return dateStr.replace(/-/g, '.')
 }
-
-const introDates = `${formatDate(anniversary.startDate)} → ${formatDate(anniversary.hundredthDay)}`
 
 /* ---------- growing sunflower stage mapped to overall reading progress ---------- */
 const gardenStage = computed(() => {
@@ -240,7 +237,8 @@ function handFlower(): string {
     + '<g transform="translate(120,6)">'
     + '<path d="M18 66 Q18 56 34 56 Q50 56 50 66 L52 80 L16 80 Z" fill="#f0907a" stroke="#3d2b1f" stroke-width="2.2" stroke-linejoin="round"/>'
     + '<circle cx="34" cy="42" r="16" fill="#ffe0b0" stroke="#3d2b1f" stroke-width="2.2"/>'
-    + '<path d="M18 42 Q17 25 34 25 Q51 25 50 42 Q50 46 48 49 L47 34 Q41 27 34 27 Q27 27 21 34 L20 49 Q18 46 18 42 Z" fill="#3d2b1f"/>'
+    + '<path d="M18 46 Q16 24 34 23 Q52 24 50 46 Q50 51 47 55 L45 36 Q40 30 34 30 Q28 30 23 36 L21 55 Q18 51 18 46 Z" fill="#3d2b1f"/>'
+    + '<g transform="translate(47,30)"><circle cx="0" cy="0" r="2.8" fill="#3d2b1f"/>' + petals(0, 0, 2.8, 6, '#f4be3a') + '</g>'
     + '<circle cx="29" cy="43" r="2" fill="#3d2b1f"/><circle cx="39" cy="43" r="2" fill="#3d2b1f"/>'
     + '<path d="M30 48 Q34 51 38 48" stroke="#3d2b1f" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
     + '<path d="M20 64 Q8 58 -4 60" stroke="#3d2b1f" stroke-width="2.2" fill="none" stroke-linecap="round"/>'
@@ -260,7 +258,7 @@ function growSunflower(stage: number): string {
   const h = 14 + stage * 13
   const topY = baseY - h
   const midX = baseX + (stage % 2 ? 6 : -6)
-  let s = '<svg viewBox="0 0 96 140" width="84" height="123" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+  let s = '<svg viewBox="0 0 96 140" width="74" height="108" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
   s += '<ellipse cx="44" cy="135" rx="22" ry="5" fill="#5c3620" opacity=".5"/>'
   if (stage === 0) {
     s += '<path d="M44 135 q0 -11 0 -16" stroke="#6f7d45" stroke-width="3.2" fill="none" stroke-linecap="round"/>'
@@ -504,28 +502,56 @@ onBeforeUnmount(() => {
                     {{ t(introChapterLabel) }}
                   </h2>
                   <div class="rule" />
-                  <p class="intro-sub">
-                    {{ t(introSubtext) }}
+                  <div class="intro-map">
+                    <div class="moon-wrap svg-slot">
+                      <!-- eslint-disable-next-line vue/no-v-html -->
+                      <span v-html="ART.moon64" />
+                    </div>
+                    <div class="plane-row svg-slot">
+                      <span class="dist-badge">1,478km ✈</span>
+                      <!-- eslint-disable-next-line vue/no-v-html -->
+                      <span v-html="ART.plane" />
+                    </div>
+                    <div class="lands">
+                      <div class="land">
+                        <div class="svg-slot">
+                          <!-- eslint-disable-next-line vue/no-v-html -->
+                          <span v-html="ART.jayLand" />
+                        </div>
+                        <!-- eslint-disable-next-line vue/no-v-html -->
+                        <span
+                          class="svg-slot"
+                          v-html="ART.landKo"
+                        />
+                        <div class="land-label">
+                          {{ t(koreaLabel) }}
+                        </div>
+                        <div class="land-name">
+                          Jay
+                        </div>
+                      </div>
+                      <div class="land">
+                        <div class="svg-slot">
+                          <!-- eslint-disable-next-line vue/no-v-html -->
+                          <span v-html="ART.lichiLand" />
+                        </div>
+                        <!-- eslint-disable-next-line vue/no-v-html -->
+                        <span
+                          class="svg-slot"
+                          v-html="ART.landTw"
+                        />
+                        <div class="land-label">
+                          {{ t(taiwanLabel) }}
+                        </div>
+                        <div class="land-name">
+                          苙綺
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <p class="intro-map-note">
+                    {{ t(introMapNote) }}
                   </p>
-                  <div class="intro-stats">
-                    <div class="stat">
-                      <span class="stat-num">100</span>
-                      <span class="stat-lbl">DAYS</span>
-                    </div>
-                    <div class="stat">
-                      <span class="stat-num">2</span>
-                      <span class="stat-lbl">COUNTRIES</span>
-                    </div>
-                  </div>
-                  <div class="intro-scene svg-slot">
-                    <!-- eslint-disable-next-line vue/no-v-html -->
-                    <span v-html="ART.jayIntro" />
-                    <!-- eslint-disable-next-line vue/no-v-html -->
-                    <span v-html="ART.lichiIntro" />
-                  </div>
-                  <div class="intro-dates">
-                    {{ introDates }}
-                  </div>
                 </div>
               </template>
 
@@ -1014,6 +1040,17 @@ onBeforeUnmount(() => {
 .intro-block .rule {
   margin: 12px auto 8px;
 }
+.intro-map {
+  margin-top: 8px;
+}
+.intro-map-note {
+  font-family: var(--round);
+  font-size: 14px;
+  color: var(--brown-soft);
+  line-height: 1.75;
+  margin-top: 18px;
+  max-width: 21em;
+}
 .intro-sub {
   font-family: var(--round);
   font-size: 14.5px;
@@ -1277,6 +1314,10 @@ onBeforeUnmount(() => {
   margin: 0;
   color: var(--ink);
 }
+/* keep the letter text clear of the growing sunflower in the bottom-left */
+.diary-page.letter .page-inner {
+  padding-bottom: 74px;
+}
 
 /* ---------- ending ---------- */
 .ending-block {
@@ -1421,10 +1462,10 @@ onBeforeUnmount(() => {
 }
 .growbox {
   position: absolute;
-  left: 26px;
+  left: 22px;
   bottom: 8px;
-  width: 84px;
-  height: 123px;
+  width: 74px;
+  height: 108px;
   pointer-events: none;
   z-index: 2;
 }
