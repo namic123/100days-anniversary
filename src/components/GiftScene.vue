@@ -6,6 +6,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { getLocalizedText, type Locale } from '@/content/localization'
 import { uiText } from '@/content/ui'
+import coverPhotoUrl from '@/assets/intro-media/photos/media-09.webp'
 
 const props = defineProps<{ locale: Locale }>()
 const emit = defineEmits<{ opened: [] }>()
@@ -718,8 +719,8 @@ onMounted(() => {
   frontCover.receiveShadow = true
   coverPivot.add(frontCover)
 
-  // cover photo — swap PHOTO_URL for a real photo; empty = placeholder
-  const PHOTO_URL = ''
+  // cover photo — media-09 (real). Empty falls back to the placeholder.
+  const PHOTO_URL = coverPhotoUrl
   function photoPlaceholder() {
     const c = document.createElement('canvas')
     c.width = c.height = 640
@@ -750,14 +751,7 @@ onMounted(() => {
     t.anisotropy = 8
     return t
   }
-  let photoTex: THREE.Texture
-  if (PHOTO_URL) {
-    photoTex = new THREE.TextureLoader().load(PHOTO_URL, (tx) => {
-      tx.colorSpace = THREE.SRGBColorSpace
-    })
-  } else {
-    photoTex = photoPlaceholder()
-  }
+  const photoMat = new THREE.MeshStandardMaterial({ map: photoPlaceholder(), roughness: 0.7, metalness: 0.0 })
 
   const titlePlate = new THREE.Mesh(
     new THREE.PlaneGeometry(BK_W * 0.74, BK_D * 0.34),
@@ -767,17 +761,36 @@ onMounted(() => {
   titlePlate.position.set(BK_W / 2, 0.053, -0.48)
   coverPivot.add(titlePlate)
 
-  const PHOTO_W = BK_W * 0.62
-  const PHOTO_H = BK_D * 0.46
+  const PHOTO_MAX_W = BK_W * 0.74
+  const PHOTO_MAX_H = BK_D * 0.44
   const PHOTO_Z = 0.4
-  const photoFrame = new THREE.Mesh(new THREE.PlaneGeometry(PHOTO_W + 0.1, PHOTO_H + 0.1), new THREE.MeshStandardMaterial({ color: 0xfff6e2, roughness: 0.85, metalness: 0.0 }))
+  const photoFrame = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshStandardMaterial({ color: 0xfff6e2, roughness: 0.85, metalness: 0.0 }))
   photoFrame.rotation.x = -Math.PI / 2
   photoFrame.position.set(BK_W / 2, 0.052, PHOTO_Z)
   coverPivot.add(photoFrame)
-  const photoPlate = new THREE.Mesh(new THREE.PlaneGeometry(PHOTO_W, PHOTO_H), new THREE.MeshStandardMaterial({ map: photoTex, roughness: 0.7, metalness: 0.0 }))
+  const photoPlate = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), photoMat)
   photoPlate.rotation.x = -Math.PI / 2
   photoPlate.position.set(BK_W / 2, 0.0535, PHOTO_Z)
   coverPivot.add(photoPlate)
+  // Fit the framed photo to the image's real aspect ratio (no distortion).
+  function fitCoverPhoto(ar: number) {
+    let w = PHOTO_MAX_W
+    let h = w / ar
+    if (h > PHOTO_MAX_H) { h = PHOTO_MAX_H; w = h * ar }
+    photoPlate.scale.set(w, h, 1)
+    photoFrame.scale.set(w + 0.12, h + 0.12, 1)
+  }
+  fitCoverPhoto(1) // square default until the real photo loads
+  if (PHOTO_URL) {
+    new THREE.TextureLoader().load(PHOTO_URL, (tx) => {
+      tx.colorSpace = THREE.SRGBColorSpace
+      tx.anisotropy = 8
+      photoMat.map = tx
+      photoMat.needsUpdate = true
+      const im = tx.image as HTMLImageElement | null
+      if (im && im.naturalWidth) fitCoverPhoto(im.naturalWidth / im.naturalHeight)
+    })
+  }
 
   const frameLineTex = (() => {
     const c = document.createElement('canvas')
