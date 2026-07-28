@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { useBookEngine } from '@/composables/useBookEngine'
+import { timelineMedia } from '@/content/timelineMedia'
 
 describe('useBookEngine', () => {
   it('builds a page array with correct section order', () => {
@@ -11,16 +12,32 @@ describe('useBookEngine', () => {
     expect(pages.value[pages.value.length - 1].section).toBe('ending')
   })
 
-  it('places a media page directly after each story page', () => {
+  it('places a media page after each story page that has media (and none when it has no media)', () => {
     const { pages } = useBookEngine()
     const timelinePages = pages.value.filter(p => p.section === 'timeline')
     expect(timelinePages.length).toBeGreaterThan(0)
     for (const tp of timelinePages) {
       const idx = pages.value.findIndex(p => p.id === tp.id)
       const next = pages.value[idx + 1]
-      expect(next.section).toBe('timeline-media')
-      expect(next.data).toBe(tp.data)
+      const id = (tp.data as { id: string }).id
+      const hasMedia = (timelineMedia[id]?.length ?? 0) > 0
+      if (hasMedia) {
+        expect(next.section).toBe('timeline-media')
+        expect(next.data).toBe(tp.data)
+      } else {
+        // Moments with no media (first-known, 100th-day) get no media page.
+        expect(next?.section).not.toBe('timeline-media')
+      }
     }
+  })
+
+  it('has no media page for moments without media (first-known, 100th-day)', () => {
+    const { pages } = useBookEngine()
+    const mediaIds = pages.value
+      .filter(p => p.section === 'timeline-media')
+      .map(p => (p.data as { id: string }).id)
+    expect(mediaIds).not.toContain('first-known')
+    expect(mediaIds).not.toContain('100th-day')
   })
 
   it('starts at page index 0', () => {

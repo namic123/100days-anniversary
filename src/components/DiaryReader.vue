@@ -157,6 +157,9 @@ interface TimelineTile {
   src: string
   placeholderSrc: string
   hasCustomMedia: boolean
+  /* Video only: real poster-frame URL (a .webp resolved from the photos glob),
+     used for the thumbnail image and the hero <video poster>. null when absent. */
+  poster: string | null
 }
 
 /* Built ONCE — media is static (locale-independent), so precompute the tiles per
@@ -170,12 +173,17 @@ for (const [entryId, slots] of Object.entries(timelineMedia)) {
       const placeholderSrc = fauxPhoto(tileSeed++, 210, 280)
       const modules = slot.kind === 'video' ? importedTimelineVideos : importedTimelinePhotos
       const customSrc = importedMediaUrl(modules, slot.fileName)
+      // Video posters live in the photos glob (same folder as real photos).
+      const poster = slot.poster
+        ? importedMediaUrl(importedTimelinePhotos, slot.poster)
+        : null
       return {
         id: slot.id,
         kind: slot.kind,
         src: customSrc ?? placeholderSrc,
         placeholderSrc,
         hasCustomMedia: Boolean(customSrc),
+        poster,
       }
     }),
   )
@@ -205,16 +213,25 @@ const mediaSel = reactive<Record<string, number>>({})
 function selIdx(page: BookPage): number {
   return mediaSel[page.id] ?? 0
 }
-function selectMedia(pageId: string, i: number) {
+function selectMedia(pageId: string, i: number, ev?: Event) {
   mediaSel[pageId] = i
+  // Keep the tapped thumb fully visible in the horizontal strip.
+  const btn = ev?.currentTarget as HTMLElement | undefined
+  if (btn?.scrollIntoView) {
+    btn.scrollIntoView({
+      inline: 'center',
+      block: 'nearest',
+      behavior: reduceMotion ? 'auto' : 'smooth',
+    })
+  }
 }
 function activeTile(page: BookPage): TimelineTile | undefined {
   return mediaTiles(page)[selIdx(page)]
 }
-/* An <img> can't render an .mp4 (video thumbnails/hero-without-file fall back to
-   the faux placeholder); real photos and real videos use their own source. */
+/* An <img> can't render an .mp4: a video thumbnail uses its real poster frame
+   when available, else the faux placeholder. Real photos use their own source. */
 function thumbSrc(tile: TimelineTile): string {
-  return tile.kind === 'video' ? tile.placeholderSrc : tile.src
+  return tile.kind === 'video' ? (tile.poster ?? tile.placeholderSrc) : tile.src
 }
 
 const clipLabel: LocalizedText = {
@@ -748,6 +765,7 @@ onBeforeUnmount(() => {
                           class="tlm-layer"
                           :class="{ on: i === selIdx(page) }"
                           :src="tile.src"
+                          :poster="tile.poster ?? undefined"
                           autoplay
                           loop
                           muted
@@ -791,6 +809,10 @@ onBeforeUnmount(() => {
                 <div
                   class="tlm-thumbs"
                   role="tablist"
+                  @touchstart.stop
+                  @touchmove.stop
+                  @touchend.stop
+                  @pointerdown.stop
                 >
                   <button
                     v-for="(tile, i) in mediaTiles(page)"
@@ -801,7 +823,7 @@ onBeforeUnmount(() => {
                     role="tab"
                     :aria-selected="i === selIdx(page) ? 'true' : 'false'"
                     :aria-label="`${i + 1} / ${mediaTiles(page).length}`"
-                    @click="selectMedia(page.id, i)"
+                    @click="selectMedia(page.id, i, $event)"
                   >
                     <img
                       :src="thumbSrc(tile)"
@@ -1486,18 +1508,31 @@ onBeforeUnmount(() => {
   margin: 10px 0 2px;
   min-height: 20px;
 }
+/* Single horizontal-scroll row so 20–28 thumbs stay a fixed size and scroll
+   instead of shrinking or overflowing the page. Touch propagation is stopped in
+   the template so dragging the rail scrolls it without flipping the page. */
 .tlm-thumbs {
   margin-top: auto;
-  padding-top: 10px;
+  padding: 10px 2px 3px;
   display: flex;
+  flex-wrap: nowrap;
   gap: 8px;
-  justify-content: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.tlm-thumbs::-webkit-scrollbar {
+  display: none;
 }
 .tlm-thumb {
   position: relative;
-  flex: 1 1 0;
-  max-width: 68px;
-  aspect-ratio: 1 / 1;
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+  scroll-snap-align: center;
   border-radius: 11px;
   overflow: hidden;
   cursor: pointer;
