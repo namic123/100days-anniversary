@@ -129,9 +129,9 @@ export function useBookEngine() {
       {
         id: 'ending',
         label: {
-          'zh-TW': '向日葵結尾',
-          ko: '해바라기 엔딩',
-          en: 'Sunflower Ending',
+          'zh-TW': '我們的100天',
+          ko: '우리의 100일',
+          en: 'Our 100 Days',
         },
         section: 'ending',
       },

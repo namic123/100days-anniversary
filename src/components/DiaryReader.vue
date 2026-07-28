@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { type Locale, type LocalizedText, getLocalizedText } from '@/content/localization'
 import { useBookEngine, type BookPage } from '@/composables/useBookEngine'
 import { uiText } from '@/content/ui'
+import PageEndingCake from '@/components/PageEndingCake.vue'
 import type { TimelineItem } from '@/content/timeline'
 import { timelineMedia, type TimelineMediaKind } from '@/content/timelineMedia'
 import type { MemoryItem } from '@/content/memories'
@@ -81,22 +82,6 @@ const introMapNote: LocalizedText = {
   ko: '멀리 떨어져 있었지만, 하루의 시작과 끝을 나누며 우리는 늘 서로의 일상 속에 있었어.',
   en: "Though far apart, sharing the start and end of each day, we were always part of each other's everyday.",
 }
-const endingChapterLabel: LocalizedText = {
-  'zh-TW': '向日葵結尾',
-  ko: '해바라기 엔딩',
-  en: 'Sunflower Ending',
-}
-const finalMessage: LocalizedText = {
-  'zh-TW': '向日葵總是朝著太陽，\n我的心也總是朝著苙綺。\n\n真心祝賀我們的第一個100天。\n愛妳。',
-  ko: '해바라기가 언제나 해를 바라보듯,\n내 마음도 언제나 苙綺를 향하고 있어.\n\n우리의 첫 100일을 진심으로 축하해.\n사랑해.',
-  en: 'Just as sunflowers always face the sun,\nmy heart always faces you.\n\nHappy 100 days.\nI love you.',
-}
-const restartLabel: LocalizedText = {
-  'zh-TW': '重新閱讀',
-  ko: '다시 읽기',
-  en: 'Read Again',
-}
-
 function t(text: LocalizedText): string {
   return getLocalizedText(text, props.locale)
 }
@@ -334,16 +319,6 @@ function lichi(size = 92, arm: 'r' | 'l' | '' = ''): string {
     + a + '</svg>'
 }
 
-function sunflower(size = 88): string {
-  return `<svg width="${size}" height="${size}" viewBox="0 0 60 60" fill="none" aria-hidden="true">`
-    + '<path d="M30 34 L30 56" stroke="#7e8a56" stroke-width="3" stroke-linecap="round"/>'
-    + '<path d="M30 46 Q22 42 18 46 Q24 50 30 47 Z" fill="#7e8a56"/>'
-    + '<g transform="translate(30,26)">' + petals(0, 0, 13, 12, '#f4be3a')
-    + '<circle cx="0" cy="0" r="9" fill="#3d2b1f"/>'
-    + '<circle cx="0" cy="0" r="9" fill="none" stroke="#5b4128" stroke-width="1"/></g>'
-    + '</svg>'
-}
-
 function moon(size = 66): string {
   return `<svg width="${size}" height="${size}" viewBox="0 0 60 60" fill="none" aria-hidden="true">`
     + '<circle cx="30" cy="30" r="20" fill="#ffe9b8" stroke="#f4be3a" stroke-width="2"/>'
@@ -470,8 +445,6 @@ const ART = {
   lichiLand: lichi(78),
   jayFut: jay(70, 'r'),
   lichiFut: lichi(70, 'l'),
-  jayEnd: jay(74, 'r'),
-  lichiEnd: lichi(74, 'l'),
   call: callScene(),
   moon64: moon(64),
   moon58: moon(58),
@@ -479,7 +452,6 @@ const ART = {
   landKo: landMound('#e7d3ab'),
   landTw: landMound('#d7e0b0'),
   hand: handFlower(),
-  sunflower: sunflower(92),
 } as const
 
 /* =========================================================
@@ -1005,31 +977,11 @@ onBeforeUnmount(() => {
 
               <!-- ENDING -->
               <template v-else-if="page.section === 'ending'">
-                <div class="ending-block">
-                  <div class="eyebrow">
-                    {{ t(endingChapterLabel) }}
-                  </div>
-                  <div class="end-scene svg-slot">
-                    <!-- eslint-disable-next-line vue/no-v-html -->
-                    <span v-html="ART.sunflower" />
-                  </div>
-                  <div class="end-chars svg-slot">
-                    <!-- eslint-disable-next-line vue/no-v-html -->
-                    <span v-html="ART.jayEnd" />
-                    <!-- eslint-disable-next-line vue/no-v-html -->
-                    <span v-html="ART.lichiEnd" />
-                  </div>
-                  <p class="end-message">
-                    {{ t(finalMessage) }}
-                  </p>
-                  <button
-                    type="button"
-                    class="restart-btn"
-                    @click="onRestart"
-                  >
-                    {{ t(restartLabel) }} ↺
-                  </button>
-                </div>
+                <PageEndingCake
+                  :active="current === total - 1"
+                  :locale="props.locale"
+                  @restart="onRestart"
+                />
               </template>
             </div>
           </div>
@@ -1806,53 +1758,11 @@ onBeforeUnmount(() => {
   padding-bottom: 18px;
 }
 
-/* ---------- ending ---------- */
-.ending-block {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  background: radial-gradient(80% 55% at 50% 42%, rgba(244, 190, 58, 0.22), transparent 65%);
-}
-.end-scene {
-  margin: 6px 0 2px;
-}
-.end-chars {
-  display: flex;
-  gap: 2px;
-  align-items: flex-end;
-  justify-content: center;
-}
-.end-message {
-  font-family: var(--serif-kr);
-  font-weight: 500;
-  font-size: 16px;
-  color: var(--brown);
-  line-height: 1.9;
-  letter-spacing: 0.3px;
-  margin-top: 10px;
-  white-space: pre-line;
-}
-.restart-btn {
-  margin-top: 20px;
-  font-family: var(--round);
-  font-size: 15px;
-  color: var(--brown);
-  background: linear-gradient(180deg, var(--amber), var(--gold));
-  border: none;
-  padding: 12px 26px;
-  border-radius: 30px;
-  min-height: 46px;
-  box-shadow: 0 6px 14px rgba(244, 190, 58, 0.4);
-  cursor: pointer;
-  letter-spacing: 0.5px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.restart-btn:active {
-  transform: translateY(2px) scale(0.98);
-  box-shadow: 0 3px 8px rgba(244, 190, 58, 0.4);
+/* ---------- ending (cake celebration lives in PageEndingCake.vue) ---------- */
+/* Let the cake scene reach the page edges instead of sitting inside the reading
+   text padding, so the canvas fireworks fill the whole leaf. */
+.diary-page.ending .page-inner {
+  padding: 0;
 }
 
 /* ---------- tap zones + hints ---------- */
