@@ -21,6 +21,7 @@ defineEmits<{ restart: [] }>()
 const componentMap = {
   intro: PageIntro,
   timeline: PageTimeline,
+  'timeline-media': PageTimeline,
   memory: PageMemory,
   'korea-taiwan': PageMap,
   future: PageFuture,

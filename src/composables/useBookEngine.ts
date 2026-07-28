@@ -4,10 +4,19 @@ import { letterPages } from '@/content/letter'
 import type { LocalizedText } from '@/content/localization'
 import { memories } from '@/content/memories'
 import { timeline } from '@/content/timeline'
+import { timelineMedia } from '@/content/timelineMedia'
 
 export interface BookPage {
   id: string
-  section: 'intro' | 'timeline' | 'memory' | 'korea-taiwan' | 'future' | 'letter' | 'ending'
+  section:
+    | 'intro'
+    | 'timeline'
+    | 'timeline-media'
+    | 'memory'
+    | 'korea-taiwan'
+    | 'future'
+    | 'letter'
+    | 'ending'
   content?: LocalizedText
   data?: unknown
 }
@@ -32,6 +41,15 @@ function buildPageArray(): BookPage[] {
       section: 'timeline',
       data: item,
     })
+    // A dedicated media page follows each story page, showing that moment's
+    // photos/videos (skipped only if the entry has no media slots).
+    if ((timelineMedia[item.id]?.length ?? 0) > 0) {
+      pages.push({
+        id: `timeline-media-${item.id}`,
+        section: 'timeline-media',
+        data: item,
+      })
+    }
   }
 
   for (const item of memories.filter(m => m.enabled)) {

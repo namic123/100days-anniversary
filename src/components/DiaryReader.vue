@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 
 import { type Locale, type LocalizedText, getLocalizedText } from '@/content/localization'
 import { useBookEngine, type BookPage } from '@/composables/useBookEngine'
@@ -195,9 +195,6 @@ for (const [entryId, slots] of Object.entries(timelineMedia)) {
     }),
   )
 }
-function timelineTiles(page: BookPage): TimelineTile[] {
-  return timelineTileMap.get(timelineItem(page).id) ?? []
-}
 function onTileError(e: Event, tile: TimelineTile) {
   const img = e.target as HTMLImageElement
   if (!img.dataset.fallback) {
@@ -205,6 +202,52 @@ function onTileError(e: Event, tile: TimelineTile) {
     img.src = tile.placeholderSrc
   }
 }
+
+/* ---------- timeline media PAGE (hero + thumbnails) ----------
+   Its own page after each story page. Video slots are surfaced first so the
+   hero opens on the clip; a photo/video is selected by tapping a thumbnail. */
+const mediaTilesMap = new Map<string, TimelineTile[]>()
+for (const [entryId, tiles] of timelineTileMap) {
+  const videos = tiles.filter((tt) => tt.kind === 'video')
+  const photos = tiles.filter((tt) => tt.kind !== 'video')
+  mediaTilesMap.set(entryId, [...videos, ...photos])
+}
+function mediaTiles(page: BookPage): TimelineTile[] {
+  return mediaTilesMap.get(timelineItem(page).id) ?? []
+}
+/* selected index per media page id (default 0 = the video-first hero). */
+const mediaSel = reactive<Record<string, number>>({})
+function selIdx(page: BookPage): number {
+  return mediaSel[page.id] ?? 0
+}
+function selectMedia(pageId: string, i: number) {
+  mediaSel[pageId] = i
+}
+function activeTile(page: BookPage): TimelineTile | undefined {
+  return mediaTiles(page)[selIdx(page)]
+}
+/* An <img> can't render an .mp4 (video thumbnails/hero-without-file fall back to
+   the faux placeholder); real photos and real videos use their own source. */
+function thumbSrc(tile: TimelineTile): string {
+  return tile.kind === 'video' ? tile.placeholderSrc : tile.src
+}
+
+const clipLabel: LocalizedText = {
+  'zh-TW': '我們的影片',
+  ko: '우리의 영상',
+  en: 'Our clip',
+}
+const mediaHint: LocalizedText = {
+  'zh-TW': '輕觸縮圖看大圖 ✦',
+  ko: '썸네일을 톡 눌러 크게 보기 ✦',
+  en: 'Tap a thumbnail to enlarge ✦',
+}
+
+/* Only the media page frees the bottom tap-strip so its thumbnail rail is
+   tappable across the full width (side tap-zones otherwise sit above content). */
+const currentIsMedia = computed(
+  () => engine.pages.value[current.value]?.section === 'timeline-media',
+)
 
 /* Auto-fit a letter's text to its page: reset to the base size, then shrink the
    font + line-height together (keeping the ruled lines aligned) until the whole
@@ -692,7 +735,7 @@ onBeforeUnmount(() => {
                     {{ formatDate(timelineItem(page).date) }}
                   </div>
                 </div>
-                <!-- scrollable body: paragraphs + media tiles -->
+                <!-- scrollable body: story paragraphs (media lives on the next page) -->
                 <div class="tl-body">
                   <p
                     v-for="(para, pi) in timelineParagraphs(page)"
@@ -701,40 +744,107 @@ onBeforeUnmount(() => {
                   >
                     {{ para }}
                   </p>
+                </div>
+              </template>
+
+              <!-- TIMELINE MEDIA (hero + thumbnails) -->
+              <template v-else-if="page.section === 'timeline-media'">
+                <div class="tlm-head">
+                  <div class="eyebrow">
+                    {{ t(storyChapterLabel) }}
+                  </div>
+                  <h2 class="title small">
+                    {{ t(timelineItem(page).title) }}
+                  </h2>
+                  <div class="tl-date">
+                    {{ formatDate(timelineItem(page).date) }}
+                  </div>
+                </div>
+
+                <div class="tlm-hero-wrap">
                   <div
-                    v-if="timelineTiles(page).length"
-                    class="tl-media"
+                    class="tlm-hero"
+                    :class="{ 'is-video': activeTile(page)?.kind === 'video' }"
                   >
-                    <div
-                      v-for="tile in timelineTiles(page)"
-                      :key="tile.id"
-                      class="tl-tile"
-                      :data-media="tile.kind"
-                    >
-                      <video
-                        v-if="tile.kind === 'video' && tile.hasCustomMedia"
-                        :src="tile.src"
-                        autoplay
-                        loop
-                        muted
-                        playsinline
-                        preload="metadata"
-                        aria-hidden="true"
-                      />
-                      <img
-                        v-else
-                        :src="tile.src"
-                        alt=""
-                        decoding="async"
-                        @error="(e) => onTileError(e, tile)"
+                    <div class="tlm-hero-inner">
+                      <template
+                        v-for="(tile, i) in mediaTiles(page)"
+                        :key="tile.id"
                       >
-                      <span
-                        v-if="tile.kind === 'video'"
-                        class="tl-play"
-                        aria-hidden="true"
-                      >▶</span>
+                        <video
+                          v-if="tile.kind === 'video' && tile.hasCustomMedia"
+                          class="tlm-layer"
+                          :class="{ on: i === selIdx(page) }"
+                          :src="tile.src"
+                          autoplay
+                          loop
+                          muted
+                          playsinline
+                          preload="metadata"
+                          aria-hidden="true"
+                        />
+                        <img
+                          v-else
+                          class="tlm-layer"
+                          :class="{ on: i === selIdx(page) }"
+                          :src="tile.kind === 'video' ? tile.placeholderSrc : tile.src"
+                          alt=""
+                          decoding="async"
+                          @error="(e) => onTileError(e, tile)"
+                        >
+                      </template>
+                    </div>
+                    <div
+                      v-if="activeTile(page)?.kind === 'video'"
+                      class="tlm-vfx"
+                    >
+                      <div class="tlm-scrim" />
+                      <div class="tlm-live">
+                        <span class="dot" />LIVE
+                      </div>
+                      <div class="tlm-play" />
+                      <div class="tlm-shine" />
                     </div>
                   </div>
+                  <div class="tlm-cap">
+                    <template v-if="activeTile(page)?.kind === 'video'">
+                      ▶ {{ t(clipLabel) }}
+                    </template>
+                    <template v-else>
+                      {{ selIdx(page) + 1 }} / {{ mediaTiles(page).length }}
+                    </template>
+                  </div>
+                </div>
+
+                <div
+                  class="tlm-thumbs"
+                  role="tablist"
+                >
+                  <button
+                    v-for="(tile, i) in mediaTiles(page)"
+                    :key="tile.id"
+                    type="button"
+                    class="tlm-thumb"
+                    :class="{ active: i === selIdx(page) }"
+                    role="tab"
+                    :aria-selected="i === selIdx(page) ? 'true' : 'false'"
+                    :aria-label="`${i + 1} / ${mediaTiles(page).length}`"
+                    @click="selectMedia(page.id, i)"
+                  >
+                    <img
+                      :src="thumbSrc(tile)"
+                      alt=""
+                      decoding="async"
+                    >
+                    <span
+                      v-if="tile.kind === 'video'"
+                      class="tlm-vtag"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
+                <div class="tlm-hint">
+                  {{ t(mediaHint) }}
                 </div>
               </template>
 
@@ -933,10 +1043,12 @@ onBeforeUnmount(() => {
       <!-- tap zones -->
       <div
         class="tap-zone tap-left"
+        :class="{ inset: currentIsMedia }"
         @click="goPrev"
       />
       <div
         class="tap-zone tap-right"
+        :class="{ inset: currentIsMedia }"
         @click="goNext"
       />
 
@@ -1308,49 +1420,202 @@ onBeforeUnmount(() => {
 .tl-text:last-child {
   margin-bottom: 0;
 }
-/* row of 2–3 photo/video tiles under the entry text */
-.tl-media {
-  display: flex;
-  gap: 8px;
-  margin-top: 14px;
+/* ---------- timeline media page (hero + thumbnails) ---------- */
+.tlm-head {
+  flex: none;
 }
-.tl-tile {
+.tlm-hero-wrap {
+  flex: none;
+  margin-top: 12px;
+}
+.tlm-hero {
   position: relative;
-  flex: 1 1 0;
-  min-width: 0;
-  aspect-ratio: 3 / 4;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  max-height: 46vh;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--paper);
+  padding: 7px; /* photo mat */
+  box-shadow: 0 10px 24px rgba(120, 80, 30, 0.22), inset 0 2px 0 rgba(255, 255, 255, 0.5);
+}
+.tlm-hero-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
   border-radius: 10px;
   overflow: hidden;
   background: var(--paper);
-  border: 2px solid rgba(203, 176, 131, 0.7);
-  box-shadow: 0 3px 9px rgba(61, 43, 31, 0.16);
-  transform: rotate(-1deg);
 }
-.tl-tile:nth-child(even) {
-  transform: rotate(1.5deg);
-}
-.tl-tile img,
-.tl-tile video {
+.tlm-layer {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  opacity: 0;
+  transition: opacity 0.45s ease;
 }
-.tl-play {
+.tlm-layer.on {
+  opacity: 1;
+}
+.tlm-vfx {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 30px;
-  height: 30px;
+  inset: 7px;
+  border-radius: 10px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.tlm-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(30, 18, 8, 0.34), transparent 55%);
+}
+.tlm-live {
+  position: absolute;
+  top: 11px;
+  left: 11px;
+  font-family: var(--hand);
+  font-weight: 700;
+  font-size: 12.5px;
+  color: #fff;
+  background: var(--rose);
+  padding: 3px 9px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.tlm-live .dot {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: rgba(20, 14, 10, 0.42);
-  border: 1.5px solid rgba(255, 249, 237, 0.9);
-  color: var(--cream);
-  font-size: 12px;
-  line-height: 30px;
+  background: #fff;
+  animation: tlm-blink 1.3s infinite ease-in-out;
+}
+.tlm-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 249, 237, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 6px 18px rgba(40, 25, 15, 0.3);
+}
+.tlm-play::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-42%, -50%);
+  border-style: solid;
+  border-width: 11px 0 11px 18px;
+  border-color: transparent transparent transparent var(--rose);
+}
+.tlm-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.35) 50%, transparent 60%);
+  background-size: 250% 100%;
+  background-position: 200% 0;
+  mix-blend-mode: screen;
+  animation: tlm-shimmer 2.6s linear infinite;
+}
+.tlm-cap {
   text-align: center;
-  padding-left: 2px;
+  font-family: var(--hand);
+  color: var(--ink);
+  font-size: 15px;
+  margin: 10px 0 2px;
+  min-height: 20px;
+}
+.tlm-thumbs {
+  margin-top: auto;
+  padding-top: 10px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.tlm-thumb {
+  position: relative;
+  flex: 1 1 0;
+  max-width: 68px;
+  aspect-ratio: 1 / 1;
+  border-radius: 11px;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--paper);
+  padding: 3px;
+  border: 2px solid transparent;
+  box-shadow: 0 3px 9px rgba(120, 80, 30, 0.18);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.tlm-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+.tlm-thumb.active {
+  border-color: var(--gold);
+  transform: translateY(-3px);
+}
+.tlm-vtag {
+  position: absolute;
+  inset: 3px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: rgba(30, 18, 8, 0.28);
+}
+.tlm-vtag::before {
+  content: "";
+  border-style: solid;
+  border-width: 7px 0 7px 12px;
+  border-color: transparent transparent transparent #fff;
+  margin-left: 2px;
+}
+.tlm-hint {
+  text-align: center;
+  font-family: var(--hand);
+  color: #c99a2e;
+  font-size: 12.5px;
+  margin-top: 9px;
+  opacity: 0.85;
+  flex: none;
+}
+@keyframes tlm-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+@keyframes tlm-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tlm-layer {
+    transition: none;
+  }
+  .tlm-shine,
+  .tlm-live .dot {
+    animation: none;
+  }
 }
 
 /* ---------- memory ---------- */
@@ -1537,6 +1802,9 @@ onBeforeUnmount(() => {
 .diary-page.timeline .page-inner {
   padding-bottom: 40px;
 }
+.diary-page.timeline-media .page-inner {
+  padding-bottom: 18px;
+}
 
 /* ---------- ending ---------- */
 .ending-block {
@@ -1598,6 +1866,8 @@ onBeforeUnmount(() => {
 }
 .tap-left { left: 0; }
 .tap-right { right: 0; }
+/* On the media page, free the bottom rail so thumbnails are tappable full-width. */
+.tap-zone.inset { bottom: 104px; }
 
 .nav-hint {
   position: absolute;

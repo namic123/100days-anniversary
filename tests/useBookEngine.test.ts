@@ -11,6 +11,18 @@ describe('useBookEngine', () => {
     expect(pages.value[pages.value.length - 1].section).toBe('ending')
   })
 
+  it('places a media page directly after each story page', () => {
+    const { pages } = useBookEngine()
+    const timelinePages = pages.value.filter(p => p.section === 'timeline')
+    expect(timelinePages.length).toBeGreaterThan(0)
+    for (const tp of timelinePages) {
+      const idx = pages.value.findIndex(p => p.id === tp.id)
+      const next = pages.value[idx + 1]
+      expect(next.section).toBe('timeline-media')
+      expect(next.data).toBe(tp.data)
+    }
+  })
+
   it('starts at page index 0', () => {
     const { currentIndex } = useBookEngine()
     expect(currentIndex.value).toBe(0)
