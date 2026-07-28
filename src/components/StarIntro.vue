@@ -3,7 +3,7 @@ import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { getLocalizedText, type Locale, type LocalizedText } from '@/content/localization'
 import { starIntro } from '@/content/starIntro'
 import {
-  starIntroPhotoSlots,
+  starIntroSlots,
   starIntroVideoSlot,
   type StarIntroCaption,
 } from '@/content/starIntroMedia'
@@ -95,53 +95,83 @@ function fauxPhoto(seed = 0, w = 300, h = 400): string {
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg)
 }
 
-// ---------------- constellation data (verbatim from mockup) -----------------
+// ---------------- constellation data (19 stars, 4 clusters 2/3/6/8) ----------
 interface StarPosition { x: number; y: number }
 interface RawStar extends StarPosition {
   seed: number
+  kind: 'photo' | 'video'
   cap: StarIntroCaption
   fileName: string
 }
 
+// Laid out through the tall (720×1280) tour space. Camera pans A→B→C→D, then
+// pulls out to reveal the whole constellation with all 19 stars in frame.
 const starPositions: StarPosition[] = [
-  { x: 170, y: 250 },
-  { x: 270, y: 340 },
-  { x: 190, y: 440 },
-  { x: 540, y: 320 },
-  { x: 620, y: 420 },
-  { x: 555, y: 520 },
-  { x: 360, y: 640 },
-  { x: 220, y: 840 },
-  { x: 320, y: 920 },
-  { x: 180, y: 980 },
-  { x: 480, y: 880 },
-  { x: 570, y: 970 },
+  // A — group 1 (ids 0-1)
+  { x: 210, y: 275 },
+  { x: 335, y: 380 },
+  // B — group 2 (ids 2-4)
+  { x: 515, y: 340 },
+  { x: 630, y: 455 },
+  { x: 520, y: 560 },
+  // C — group 3 (ids 5-10)
+  { x: 185, y: 660 },
+  { x: 330, y: 690 },
+  { x: 200, y: 820 },
+  { x: 355, y: 850 },
+  { x: 255, y: 950 },
+  { x: 470, y: 715 },
+  // D — group 4 (ids 11-18)
+  { x: 300, y: 955 },
+  { x: 470, y: 955 },
+  { x: 640, y: 970 },
+  { x: 200, y: 1070 },
+  { x: 380, y: 1075 },
+  { x: 570, y: 1080 },
+  { x: 300, y: 1195 },
+  { x: 470, y: 1200 },
 ]
 const rawStars: RawStar[] = starPositions.map((position, index) => ({
   ...position,
   seed: index,
-  cap: starIntroPhotoSlots[index].caption,
-  fileName: starIntroPhotoSlots[index].fileName,
+  kind: starIntroSlots[index].kind,
+  cap: starIntroSlots[index].caption,
+  fileName: starIntroSlots[index].fileName,
 }))
 const clusters = [
-  { ids: [0, 1, 2], fx: 210, fy: 350, s: 1.14 },
-  { ids: [3, 4, 5], fx: 575, fy: 420, s: 1.14 },
-  { ids: [6, 7, 8, 9], fx: 300, fy: 800, s: 1.06 },
-  { ids: [10, 11], fx: 520, fy: 920, s: 1.14 },
+  { ids: [0, 1], fx: 272, fy: 327, s: 1.14 },
+  { ids: [2, 3, 4], fx: 555, fy: 452, s: 1.08 },
+  { ids: [5, 6, 7, 8, 9, 10], fx: 299, fy: 781, s: 0.95 },
+  { ids: [11, 12, 13, 14, 15, 16, 17, 18], fx: 416, fy: 1063, s: 0.85 },
 ]
-const edges = [[0, 1], [1, 2], [3, 4], [4, 5], [7, 8], [8, 9], [10, 11], [6, 3], [6, 7], [1, 6]]
+const edges = [
+  // within clusters
+  [0, 1],
+  [2, 3], [3, 4],
+  [5, 6], [6, 10], [5, 7], [6, 8], [7, 9], [8, 9],
+  [11, 12], [12, 13], [11, 14], [12, 15], [13, 16], [14, 17], [15, 18], [16, 18],
+  // inter-cluster bridges (A→B→C→D)
+  [1, 2], [4, 5], [10, 11],
+]
 
 // Reactive star list (lit flag drives the bloom); src precomputed once.
 const stars = reactive(
   rawStars.map((s) => {
     const placeholderSrc = fauxPhoto(s.seed, 180, 228)
-    const customSrc = importedMediaUrl(importedPhotos, s.fileName)
+    const customSrc =
+      s.kind === 'video'
+        ? importedMediaUrl(importedVideos, s.fileName)
+        : importedMediaUrl(importedPhotos, s.fileName)
     return {
       x: s.x,
       y: s.y,
+      kind: s.kind,
       cap: s.cap,
       fileName: s.fileName,
-      src: customSrc ?? placeholderSrc,
+      // `src` feeds the <img> (photo) or the video `poster` (placeholder).
+      src: s.kind === 'photo' ? (customSrc ?? placeholderSrc) : placeholderSrc,
+      // `videoSrc` feeds the <video> for video stars (null → placeholder img).
+      videoSrc: s.kind === 'video' ? customSrc : null,
       placeholderSrc,
       hasCustomMedia: Boolean(customSrc),
       lit: false,
@@ -169,6 +199,14 @@ function photoAlt(cap: StarIntroCaption): string {
 
 function restorePhotoPlaceholder(index: number) {
   const star = stars[index]
+  star.src = star.placeholderSrc
+  star.hasCustomMedia = false
+}
+
+// A video star that fails to load falls back to its placeholder <img>.
+function restoreStarVideo(index: number) {
+  const star = stars[index]
+  star.videoSrc = null
   star.src = star.placeholderSrc
   star.hasCustomMedia = false
 }
@@ -245,7 +283,7 @@ async function run() {
   phase = 'tour'
 
   // 1. establishing wide shot + title
-  panTo(360, 500, 0.58)
+  panTo(410, 730, 0.47)
   titleShow.value = true
   await wait(1500); if (cancelled) return
   titleShow.value = false
@@ -264,7 +302,7 @@ async function run() {
   }
 
   // 3. pull out and reveal the whole constellation
-  panTo(360, 580, 0.55)
+  panTo(410, 738, 0.46)
   lines.forEach((l) => { l.drawn = true })
   await wait(1250); if (cancelled) return
 
@@ -698,10 +736,23 @@ onBeforeUnmount(() => {
         class="su-star"
         :class="{ lit: s.lit }"
         :style="{ left: s.x + 'px', top: s.y + 'px' }"
-        data-media="photo"
+        :data-media="s.kind"
       >
         <div class="su-card">
+          <video
+            v-if="s.kind === 'video' && s.videoSrc"
+            :src="s.videoSrc"
+            :poster="s.placeholderSrc"
+            :aria-label="photoAlt(s.cap)"
+            autoplay
+            loop
+            muted
+            playsinline
+            preload="metadata"
+            @error="restoreStarVideo(i)"
+          />
           <img
+            v-else
             :src="s.src"
             :alt="s.hasCustomMedia ? photoAlt(s.cap) : ''"
             decoding="async"
@@ -1002,7 +1053,8 @@ onBeforeUnmount(() => {
   box-shadow: 0 6px 22px rgba(0, 0, 0, .5), 0 0 0 3px rgba(255, 249, 237, .92),
               0 0 26px 7px rgba(244, 190, 58, .45);
 }
-.su-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.su-card img,
+.su-card video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .su-cap {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, 0);
   font-family: Gaegu, cursive; font-size: 15px; color: var(--gold); white-space: nowrap;
