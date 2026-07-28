@@ -19,8 +19,18 @@ const leadIn: LocalizedText = {
 }
 const finalMessage: LocalizedText = {
   ko: '우리의 첫 100일,\n이렇게 한 권의 이야기가 되었어.\n\n앞으로의 수많은 날들도\n너와 함께 써 내려가고 싶어.\n\n사랑해, 苙綺.',
-  'zh-TW': '我們的第一個100天，\n就這樣成了一本故事。\n\n往後無數的日子，\n也想和你一起寫下去。\n\n我愛妳，苙綺。',
+  'zh-TW': '我們的第一個100天，\n就這樣成了一本故事。\n\n往後無數的日子，\n也想和妳一起寫下去。\n\n我愛妳，苙綺。',
   en: 'Our first 100 days\nhave become a story of their own.\n\nAnd all the many days ahead —\nI want to write them with you.\n\nI love you, Lichi.',
+}
+const rereadLabel: LocalizedText = {
+  'zh-TW': '重新閱讀',
+  ko: '다시 읽기',
+  en: 'Read Again',
+}
+const replayLabel: LocalizedText = {
+  'zh-TW': '重新播放',
+  ko: '다시 보기',
+  en: 'Replay',
 }
 function t(text: LocalizedText): string {
   return getLocalizedText(text, props.locale)
@@ -816,14 +826,14 @@ onBeforeUnmount(() => {
           class="cake-btn primary"
           @click="onReread"
         >
-          다시 읽기 ↺
+          {{ t(rereadLabel) }} ↺
         </button>
         <button
           type="button"
           class="cake-btn"
           @click="onReplay"
         >
-          다시 보기 ↺
+          {{ t(replayLabel) }} ↺
         </button>
       </div>
     </section>

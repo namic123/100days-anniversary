@@ -58,7 +58,7 @@ export const letterPages: LetterPage[] = [
     id: 'letter-7',
     content: {
       ko: '우리에게는 앞으로 함께 만들고 싶은 기억이 정말 많아.\n\n한국에서 함께 평범한 하루를 보내고 싶고, 대만의 새로운 장소도 같이 여행하고 싶어. 같이 요리하고, 벚꽃을 보고, 크리스마스를 보내고, 200일과 1주년을 함께 축하하고 싶어.\n\n그리고 언젠가는 보고 싶다는 말을 한 뒤, 다음 만남을 오래 기다리지 않아도 되는 날이 왔으면 좋겠어.\n\n해바라기가 언제나 해를 바라보듯, 내 마음도 언제나 苙綺를 향하고 있어.\n\n100일 동안 함께해줘서 고마워. 우리의 첫 100일을 진심으로 축하해.\n\n지금도 많이 사랑하고, 앞으로는 지금보다 더 많이 사랑할게.\n\n사랑해, 苙綺.\n\nJay',
-      'zh-TW': '我們還有好多好多想一起創造的回憶。\n\n想在韓國一起度過平凡的一天，也想一起去台灣的新地方旅行。想一起做料理、看櫻花、過聖誕節，一起慶祝200天和一週年。\n\n還有，希望有一天在說完「好想見你」之後，不用再等很久就能見到彼此。\n\n就像向日葵總是朝著太陽一樣，我的心也總是朝著苙綺。\n\n謝謝妳陪我走過這100天。真心祝賀我們的第一個100天。\n\n現在就已經很愛妳了，以後會比現在更加愛妳。\n\n愛妳，苙綺。\n\nJay',
+      'zh-TW': '我們還有好多好多想一起創造的回憶。\n\n想在韓國一起度過平凡的一天，也想一起去台灣的新地方旅行。想一起做料理、看櫻花、過聖誕節，一起慶祝200天和一週年。\n\n還有，希望有一天在說完「好想見妳」之後，不用再等很久就能見到彼此。\n\n就像向日葵總是朝著太陽一樣，我的心也總是朝著苙綺。\n\n謝謝妳陪我走過這100天。真心祝賀我們的第一個100天。\n\n現在就已經很愛妳了，以後會比現在更加愛妳。\n\n愛妳，苙綺。\n\nJay',
       en: 'There are so many memories we still want to create together.\n\nI want to spend an ordinary day together in Korea, and travel to new places in Taiwan together. I want to cook together, see the cherry blossoms, spend Christmas together, and celebrate 200 days and our first anniversary.\n\nAnd someday, I hope the day comes when after saying "I miss you," we don\'t have to wait long to see each other again.\n\nJust as sunflowers always face the sun, my heart always faces you.\n\nThank you for being with me these 100 days. I sincerely celebrate our first 100 days.\n\nI love you so much already, and I will love you even more in the days to come.\n\nI love you, 苙綺.\n\nJay',
     },
   },

@@ -999,8 +999,21 @@ onMounted(() => {
     const portrait = h > w
     camera.aspect = w / h
     camera.fov = portrait ? 50 : 42
-    camBaseZoom = portrait ? 1.18 : 1.0
+    camBaseZoom = portrait ? 1.22 : 1.0
     camera.updateProjectionMatrix()
+    // On narrow portrait screens the side decor (envelope left, date stamp right)
+    // falls outside the frame — pull both inward (and a touch forward) so they show.
+    if (portrait) {
+      envelope.position.set(-0.98, 0.5, 1.6)
+      envelope.scale.setScalar(0.9)
+      stamp.position.set(0.66, 0.021, 2.02)
+      stamp.scale.setScalar(0.82)
+    } else {
+      envelope.position.set(-1.85, 0.5, 1.1)
+      envelope.scale.setScalar(1)
+      stamp.position.set(1.9, 0.021, 1.4)
+      stamp.scale.setScalar(1)
+    }
     renderer.setSize(w, h)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     composer.setSize(w, h)
