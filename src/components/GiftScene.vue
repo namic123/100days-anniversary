@@ -6,7 +6,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { getLocalizedText, type Locale } from '@/content/localization'
 import { uiText } from '@/content/ui'
-import coverPhotoUrl from '@/assets/intro-media/photos/media-09.webp'
+import coverVideoUrl from '@/assets/cover-media/cover.mp4?url'
 
 const props = defineProps<{ locale: Locale }>()
 const emit = defineEmits<{ opened: [] }>()
@@ -719,8 +719,7 @@ onMounted(() => {
   frontCover.receiveShadow = true
   coverPivot.add(frontCover)
 
-  // cover photo — media-09 (real). Empty falls back to the placeholder.
-  const PHOTO_URL = coverPhotoUrl
+  // cover clip — the couple's video as a muted looping VideoTexture.
   function photoPlaceholder() {
     const c = document.createElement('canvas')
     c.width = c.height = 640
@@ -780,17 +779,27 @@ onMounted(() => {
     photoPlate.scale.set(w, h, 1)
     photoFrame.scale.set(w + 0.12, h + 0.12, 1)
   }
-  fitCoverPhoto(1) // square default until the real photo loads
-  if (PHOTO_URL) {
-    new THREE.TextureLoader().load(PHOTO_URL, (tx) => {
-      tx.colorSpace = THREE.SRGBColorSpace
-      tx.anisotropy = 8
-      photoMat.map = tx
-      photoMat.needsUpdate = true
-      const im = tx.image as HTMLImageElement | null
-      if (im && im.naturalWidth) fitCoverPhoto(im.naturalWidth / im.naturalHeight)
-    })
-  }
+  fitCoverPhoto(1) // square default until the clip's metadata loads
+  // Muted, looping cover video → VideoTexture (auto-updates while the scene renders).
+  let coverVideoEl: HTMLVideoElement | null = document.createElement('video')
+  coverVideoEl.src = coverVideoUrl
+  coverVideoEl.muted = true
+  coverVideoEl.loop = true
+  coverVideoEl.playsInline = true
+  coverVideoEl.setAttribute('muted', '')
+  coverVideoEl.setAttribute('playsinline', '')
+  coverVideoEl.preload = 'auto'
+  coverVideoEl.addEventListener('loadedmetadata', () => {
+    if (coverVideoEl && coverVideoEl.videoWidth && coverVideoEl.videoHeight) {
+      fitCoverPhoto(coverVideoEl.videoWidth / coverVideoEl.videoHeight)
+    }
+    const vtex = new THREE.VideoTexture(coverVideoEl as HTMLVideoElement)
+    vtex.colorSpace = THREE.SRGBColorSpace
+    vtex.anisotropy = 8
+    photoMat.map = vtex
+    photoMat.needsUpdate = true
+  })
+  coverVideoEl.play().catch(() => {})
 
   const frameLineTex = (() => {
     const c = document.createElement('canvas')
@@ -1130,6 +1139,7 @@ onMounted(() => {
     disposed = true
     if (raf) cancelAnimationFrame(raf)
     tweens.length = 0
+    if (coverVideoEl) { coverVideoEl.pause(); coverVideoEl.removeAttribute('src'); coverVideoEl.load(); coverVideoEl = null }
     canvas.removeEventListener('pointerdown', onTap)
     window.removeEventListener('pointermove', onPointerMove)
     window.removeEventListener('resize', resize)

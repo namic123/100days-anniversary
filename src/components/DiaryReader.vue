@@ -792,7 +792,6 @@ onBeforeUnmount(() => {
                       <div class="tlm-live">
                         <span class="dot" />LIVE
                       </div>
-                      <div class="tlm-play" />
                       <div class="tlm-shine" />
                     </div>
                   </div>
