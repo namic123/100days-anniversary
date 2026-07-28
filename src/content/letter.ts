@@ -26,7 +26,7 @@ export const letterPages: LetterPage[] = [
     id: 'letter-3',
     content: {
       ko: '첫 만남을 마치고 네가 다시 대만으로 돌아간 뒤에도 나는 자주 그날을 떠올렸어. 그리고 얼마 후 네가 다시 한국에 놀러 왔을 때, 우리는 또 함께 시간을 보냈지.\n\n처음 만났을 때도 좋았지만, 다시 만났을 때는 내 마음이 전보다 더 분명해지고 있다는 걸 느꼈어. 함께 있는 시간은 늘 빠르게 지나갔고, 네가 돌아갈 시간이 가까워질수록 아쉬운 마음도 점점 커졌어.\n\n네가 다시 대만으로 떠나던 날, 나는 이상하게도 한 가지를 확실히 알 수 있었어.\n\n앞으로 내가 苙綺를 정말 많이 그리워하게 될 거라는 것.',
-      'zh-TW': '第一次見面結束，妳回到台灣之後，我還是常常回想那一天。不久後妳又來韓國玩的時候，我們又一起度過了一段時光。\n\n第一次見面就已經很美好了，但再次相見時，我感覺到自己的心意比之前更加清晰了。在一起的時間總是過得好快，而妳要回去的日子越來越近，心裡的不捨也越來越強烈。\n\n妳再次飛回台灣的那天，我奇怪地有一件事變得非常確定。\n\n那就是——我一定會非常非常想念苙綺。',
+      'zh-TW': '第一次見面結束，妳回到台灣之後，我還是常常回想那一天。不久後妳又來韓國玩的時候，我們又一起度過了一段時光。\n\n第一次見面就已經很美好了，但再次相見時，我感覺到自己的心意比之前更加清晰了。在一起的時間總是過得好快，而妳要回去的日子越來越近，心裡的不捨也越來越強烈。\n\n妳再次飛回台灣的那天，但說也奇怪，有一件事我卻能非常確定。\n\n那就是——我一定會非常非常想念苙綺。',
       en: 'Even after our first meeting ended and you returned to Taiwan, I often thought back to that day. And when you came to Korea again not long after, we spent more time together.\n\nOur first meeting was wonderful, but when we met again, I realized my feelings had become clearer than before. Time together always passed quickly, and as the day you had to leave drew closer, the feeling of longing only grew.\n\nThe day you flew back to Taiwan, I somehow knew one thing for certain.\n\nThat I would miss 苙綺 — so very much.',
     },
   },
@@ -42,7 +42,7 @@ export const letterPages: LetterPage[] = [
     id: 'letter-5',
     content: {
       ko: '기쁘면서도 동시에 우리가 다시 먼 거리에서 시작해야 한다는 사실이 걱정되기도 했어. 그래도 그때부터 나는 분명하게 알게 되었어. 거리가 멀다는 이유로 포기하고 싶은 사람이 아니라, 그 거리를 견디면서도 계속 함께하고 싶은 사람이 바로 苙綺라는 것을.\n\n장거리 연애는 생각보다 쉽지 않았어.\n\n보고 싶을 때 바로 볼 수 없고, 안아주고 싶을 때 안아줄 수 없고, 서로에게 힘든 일이 있어도 화면 너머에서 위로해야 할 때가 있었지. 때로는 서로 다른 언어 때문에 내 마음을 충분히 전달하지 못한 것 같아 답답하기도 했어.\n\n하지만 그런 시간 덕분에 오히려 내 마음은 더 분명해졌어.\n\n처음 苙綺를 좋아했던 마음도 소중하지만, 기다리고 그리워하고 다시 만나면서 지금의 마음은 그때보다 훨씬 깊어졌어. 가까이 있을 때만 좋은 사람이 아니라, 멀리 떨어져 있어도 계속 생각나고 하루를 나누고 싶은 사람이라는 것을 알게 되었어.',
-      'zh-TW': '開心的同時，也擔心我們又要從遙遠的距離重新開始。但從那時起，我很確定地知道了一件事——苙綺不是因為距離遠就想放棄的人，而是即使承受著這段距離，也想一直在一起的人。\n\n遠距離戀愛比想像中困難。\n\n想見面的時候不能馬上見到，想擁抱的時候不能擁抱，彼此遇到難過的事，也只能隔著螢幕安慰。有時候因為語言不同，覺得自己的心意沒能好好傳達而感到著急。\n\n但正是因為經歷了那些日子，我的心反而變得更加堅定。\n\n最初喜歡苙綺的心情固然珍貴，但經過等待、思念、再次相見，現在的心意已經比那時候深了好多。妳不是只有在身邊才覺得好的人，而是即使相隔遙遠，也會不斷想起、想要分享每一天的人。',
+      'zh-TW': '開心的同時，也擔心我們又要從遙遠的距離重新開始。但從那時起，我很確定地知道了一件事——苙綺不是因為距離遠就想放棄的人，而是即使承受著這段距離，也想一直在一起的人。\n\n遠距離戀愛比想像中困難。\n\n想見面的時候不能馬上見到，想擁抱的時候不能擁抱，彼此遇到難過的事，也只能隔著螢幕安慰。有時候因為語言不同，覺得自己的心意沒能好好傳達，而感到有些鬱悶。\n\n但正是因為經歷了那些日子，我的心反而變得更加堅定。\n\n最初喜歡苙綺的心情固然珍貴，但經過等待、思念、再次相見，現在的心意已經比那時候深了好多。妳不是只有在身邊才覺得好的人，而是即使相隔遙遠，也會不斷想起、想要分享每一天的人。',
       en: 'I was happy, but at the same time, I worried that we would have to start again from a long distance. Still, from that moment on, I knew one thing clearly — you are not someone I would give up on because of distance. You are the person I want to be with even through that distance.\n\nLong-distance love was harder than I imagined.\n\nWe couldn\'t see each other when we wanted to, couldn\'t hold each other when we wanted to, and when one of us was struggling, we could only comfort each other through a screen. Sometimes the difference in our languages made me anxious, feeling like I couldn\'t fully convey my heart.\n\nBut because of those times, my feelings only became more certain.\n\nThe heart that first liked you is precious, but through waiting, missing you, and meeting again, my feelings now are so much deeper than before. You are not someone I only appreciate when you\'re near — you are the person I think about constantly, the person I want to share every day with, even from far away.',
     },
   },
