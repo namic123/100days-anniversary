@@ -98,9 +98,16 @@ button:focus-visible {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: rgba(255, 249, 237, 0.92);
+  /* Opaque fill instead of a blurred backdrop. The FAB stack is position:fixed
+     directly over the diary's animating 3D subtree, and a backdrop-filter has
+     to re-sample and re-blur its backdrop every frame the content beneath it
+     changes — ~40 full-resolution re-blurs per page turn, which is far more
+     expensive on iOS than on Blink. The fill was already 92% opaque, so only 8%
+     of the backdrop was ever showing through the blur; at 96% the difference is
+     not perceptible. (The blur also never applied on iOS below Safari 18, which
+     only supports -webkit-backdrop-filter — never declared here.) */
+  background: rgba(255, 249, 237, 0.96);
   border: 1px solid var(--line);
-  backdrop-filter: blur(12px);
   font-size: 11px;
   color: var(--muted);
   cursor: pointer;
