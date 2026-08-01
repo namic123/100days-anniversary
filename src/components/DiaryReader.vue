@@ -504,26 +504,6 @@ function zFor(index: number): number {
   return total.value - index
 }
 
-/* Depth offset per page, in px, fed to the page transform as --pz.
-   `.diary-book` is a preserve-3d rendering context, and inside one the paint
-   order is decided by 3D depth — z-index alone is only reliably honoured by
-   Blink. WebKit sorts by depth and falls back to DOM order for coplanar
-   siblings, which is exactly our case: the current page and the next one both
-   sit at rotateY(0), fully overlapping and opaque, with the next page later in
-   the DOM. That made the wrong page paint on top on iOS.
-
-   Giving each page a fixed depth makes the ordering explicit instead of
-   engine-dependent. Two properties matter:
-   - It is derived from the page's ABSOLUTE index, so it never changes while a
-     transition is running (a changing translateZ would animate over 0.68s).
-   - It stays positive so pages keep painting in front of the binding
-     (`.diary-book::before`, at depth 0), matching the current z-index result.
-   Range is 1.00px..0.28px over 19 pages; against the 1500px perspective that is
-   a <0.07% scale difference — sub-pixel, and constant per page. */
-function pzFor(index: number): string {
-  return `${(1 - index * 0.04).toFixed(3)}px`
-}
-
 function waitFlip(idx: number): Promise<void> {
   return new Promise((resolve) => {
     if (reduceMotion) { resolve(); return }
@@ -662,7 +642,7 @@ onBeforeUnmount(() => {
               'no-anim': noAnim,
             },
           ]"
-          :style="{ zIndex: zFor(index), '--pz': pzFor(index) }"
+          :style="{ zIndex: zFor(index) }"
         >
           <div class="page-front">
             <div class="page-inner">
@@ -1192,20 +1172,13 @@ onBeforeUnmount(() => {
      compositor layer is cheap and lets the turn stay transform-only (no repaint
      per frame) and avoids a promote-on-flip-start hitch. */
   will-change: transform;
-  /* --pz (set inline, see pzFor) gives each page an explicit depth so the paint
-     order inside the preserve-3d context is not left to engine-specific
-     tie-breaking. Both states below MUST list the same transform functions in
-     the same order: if the lists differ, the engine may fall back to matrix
-     interpolation, and rotateY(-180deg) decomposes degenerately — the turn
-     would squash flat instead of rotating. Hence the explicit rotateY(0deg). */
-  transform: translateZ(var(--pz, 0px)) rotateY(0deg);
   transition: transform 0.68s cubic-bezier(0.33, 0, 0.2, 1);
 }
 .diary-page.no-anim {
   transition: none !important;
 }
 .diary-page.flipped {
-  transform: translateZ(var(--pz, 0px)) rotateY(-180deg);
+  transform: rotateY(-180deg);
 }
 
 /* the two physical sides of the leaf */
