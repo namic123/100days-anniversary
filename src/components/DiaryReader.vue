@@ -1915,4 +1915,53 @@ onBeforeUnmount(() => {
 @media (prefers-reduced-motion: reduce) {
   .diary-page { transition: none !important; }
 }
+
+/* ==========================================================================
+   iOS / WebKit — 2D page turn instead of the 3D one
+   ==========================================================================
+   The 3D turn has never rendered correctly on iOS: pages painted in the wrong
+   order, and turning forward to a page that had not been on screen yet left it
+   blank until you turned back. Every fix aimed at the 3D pipeline (explicit
+   depth, cheaper compositing, fewer forced reflows) either missed or only moved
+   the problem, so on WebKit we stop using the 3D pipeline at all rather than
+   keep fighting it. Every other engine keeps the book flip untouched.
+
+   `@supports (-webkit-touch-callout: none)` is the usual iOS/iPadOS probe —
+   that property exists only on WebKit's touch platforms, so desktop Safari and
+   everything else fall through to the 3D rules above. It also (correctly)
+   catches Chrome and Firefox on iOS, which are WKWebView underneath.
+
+   The turn becomes a slide-and-fade. `transform` is still what transitions, so
+   waitFlip()'s transitionend listener keeps working and no script changes.
+
+   This removes, on iOS only:
+   - the 3D rendering context (transform-style / perspective), so paint order
+     follows z-index instead of engine-specific depth sorting
+   - the second face, which is never seen without a rotation — halving the
+     full-viewport compositor layers the page stack needs
+   - backface-visibility, whose interaction with the rounded overflow clip is a
+     known way for WebKit to hide a face that should be visible
+   - the permanent layer promotion, so a revealed page is painted with its
+     parent rather than waiting on its own deferred rasterization */
+@supports (-webkit-touch-callout: none) {
+  .diary-book-area { perspective: none; }
+  .diary-book { transform-style: flat; }
+
+  .diary-page {
+    transform-style: flat;
+    will-change: auto;
+    transform: translateX(0);
+    transition: transform 0.42s cubic-bezier(0.33, 0, 0.2, 1), opacity 0.42s ease;
+  }
+  .diary-page.flipped {
+    transform: translateX(-26%);
+    opacity: 0;
+  }
+
+  .page-front {
+    backface-visibility: visible;
+    -webkit-backface-visibility: visible;
+  }
+  .page-back { display: none; }
+}
 </style>
